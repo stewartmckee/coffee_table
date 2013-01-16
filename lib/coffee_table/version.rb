@@ -1,0 +1,3 @@
+module CoffeeTable
+  VERSION = "0.0.1"
+end
