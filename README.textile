@@ -7,8 +7,7 @@ h1. CoffeeTable v0.0.2
 h2. Intro 
   
   CoffeeTable was born out of a frustration with the standard caching methods around.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable maintains a list of its keys in a known format and when expiry is required for an object it knows which ones to expire
-  
-  
+    
 h3. Installation
 
 
