@@ -76,42 +76,195 @@ describe CoffeeTable do
     end
     context "with related objects" do
       it "should create a key from the id's of the related objects" do
-        test_object = SampleClass.new
+        test_object = SampleClass.new(9938)
         result = @coffee_table.get_cache(:test_key, test_object) do
           "this is a changed value"
         end
         
-        puts @coffee_table.keys
-        @coffee_table.keys.should include "test_key_sample_class[9939]"
+        @coffee_table.keys.should include "test_key_sample_class[9938]"
         
       end
       it "should raise an exception if a related object does not respond_to id" do
         test_object = SampleClassWithoutId.new
 
         lambda {
-        result = @coffee_table.get_cache(:test_key, test_object) do
-          "this is a changed value"
-        end
+          result = @coffee_table.get_cache(:test_key, test_object) do
+            "this is a changed value"
+          end
         }.should raise_exception "Objects passed in must have an id method"
         
       end
     end
     context "with expiry" do
-      it "should not execute block when cache available and not expired"
-      it "should execute block and return value when cache has expired"
+      it "keys should update when cache expires" do
+        @coffee_table.get_cache(:test_key, :expiry => 0.2) do
+          "object1"
+        end
+        @coffee_table.keys.count.should == 1
+        sleep 0.5
+        @coffee_table.keys.count.should == 0
+      end
+      it "should not execute block during cache period" do
+        @coffee_table.get_cache("asdf", :expiry => 1) do
+          "this is a value"
+        end
+        result = @coffee_table.get_cache("asdf") do
+          "this is a changed value"
+        end      
+        result.should == "this is a value"      
+
+      end
+      it "should execute block and return value when cache has expired" do
+        @coffee_table.get_cache("asdf", :expiry => 1) do
+          "this is a value"
+        end
+        sleep 2
+        result = @coffee_table.get_cache("asdf") do
+          "this is a changed value"
+        end      
+        result.should == "this is a changed value"      
+      end
     end
   end
   
   describe "expire_key" do
+    it "should expire the specified key" do
+      @coffee_table.get_cache(:first_key) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key) do
+        "object3"
+      end
+
+      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+      @coffee_table.expire_key("second_key")
+      @coffee_table.keys.should == ["first_key", "third_key"]
+
+    end
+    it "should not expire anything if no matches" do
+      @coffee_table.get_cache(:first_key) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key) do
+        "object3"
+      end
+
+      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+      @coffee_table.expire_key("fourth_key")
+      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+
+    end
   end
   
   describe "expire_all" do
+    before(:each) do
+      object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
+      object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
+      object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
+
+      @coffee_table.get_cache(:first_key) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key) do
+        "object3"
+      end
+    end
+
+    it "should delete all keys" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_all
+      @coffee_table.keys.count.should == 0
+
+      result = @coffee_table.get_cache(:first_key) do
+        "changed value"
+      end
+
+      result.should == "changed value"
+
+    end
   end
   
   describe "keys" do
+    before(:each) do
+      @object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
+      @object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
+      @object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
+
+    end
+
+    it "should return an array of string" do
+      @coffee_table.keys.should be_an_instance_of Array
+      @coffee_table.keys.map{|key| key.should be_an_instance_of String}
+    end
+    it "should return key created without objects" do
+      @coffee_table.get_cache(:first_key) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key) do
+        "object3"
+      end
+
+      @coffee_table.keys.should == ["first_key",
+                               "second_key",
+                               "third_key"]
+
+    end
+    it "should return key created with objects and ids" do
+      @coffee_table.get_cache(:first_key, @object1) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key, @object2) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key, @object3) do
+        "object3"
+      end
+      @coffee_table.keys.should == ["first_key_sample_class[1]_sample_class[2]_sample_class[3]",
+                               "second_key_sample_class[4]_sample_class[2]_sample_class[5]",
+                               "third_key_sample_class[7]_sample_class[2]_sample_class[8]"]
+    end
+
   end
   
   describe "expire_for" do
+    before(:each) do
+      object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
+      object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
+      object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
+
+      @coffee_table.get_cache(:first_key, object1) do
+        "object1"
+      end
+      @coffee_table.get_cache(:second_key, object2) do
+        "object2"
+      end
+      @coffee_table.get_cache(:third_key, object3) do
+        "object3"
+      end
+    end
+
+    it "should not delete any keys if object is not present" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for(SampleClass.new(18))
+      @coffee_table.keys.count.should == 3
+    end
+    it "should only delete keys that object is present in" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for(SampleClass.new(1))
+      @coffee_table.keys.count.should == 2
+    end
   end
     
 end

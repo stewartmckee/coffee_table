@@ -1,5 +1,8 @@
 class SampleClass
+  def initialize(id)
+    @id = id
+  end
   def id
-    9939
+    @id
   end
 end
