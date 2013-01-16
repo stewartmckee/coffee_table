@@ -140,9 +140,9 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
       @coffee_table.expire_key("second_key")
-      @coffee_table.keys.should == ["first_key", "third_key"]
+      @coffee_table.keys.sort.should == ["first_key", "third_key"].sort
 
     end
     it "should not expire anything if no matches" do
@@ -156,9 +156,9 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
       @coffee_table.expire_key("fourth_key")
-      @coffee_table.keys.should == ["first_key", "second_key", "third_key"]
+      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
 
     end
   end
@@ -217,9 +217,9 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.should == ["first_key",
+      @coffee_table.keys.sort.should == ["first_key",
                                "second_key",
-                               "third_key"]
+                               "third_key"].sort
 
     end
     it "should return key created with objects and ids" do
@@ -232,9 +232,9 @@ describe CoffeeTable do
       @coffee_table.get_cache(:third_key, @object3) do
         "object3"
       end
-      @coffee_table.keys.should == ["first_key_sample_class[1]_sample_class[2]_sample_class[3]",
+      @coffee_table.keys.sort.should == ["first_key_sample_class[1]_sample_class[2]_sample_class[3]",
                                "second_key_sample_class[4]_sample_class[2]_sample_class[5]",
-                               "third_key_sample_class[7]_sample_class[2]_sample_class[8]"]
+                               "third_key_sample_class[7]_sample_class[2]_sample_class[8]"].sort
     end
 
   end
