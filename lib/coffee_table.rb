@@ -1,30 +1,34 @@
 require "coffee_table/version"
+require "utility"
 require "redis"
 
 module CoffeeTable
   class Cache
-  
-    def self.config(options)
-      @options = {}
 
-      raise "config must be passed a hash" unless options.instance_of? Hash
+    include CoffeeTable::Utility
+  
+    def initialize(options={})
       @options = options
-      @options[:enable_cache] = true unless @options.has_key? :enable_cache
-      @options[:redis_namespace] = :coffee_table unless @options.has_key? :redis_namespace
-      @options[:redis_server] = "127.0.0.1" unless @options.has_key? :redis_server
-      @options[:redis_port] = 6789 unless @options.has_key? :redis_port
+
+      default_enable_cache_to true
+      default_redis_namespace_to :coffee_table
+      default_redis_server_to "127.0.0.1"
+      default_redis_port_to 6789
       
     end
 
-    def self.get_cache(initial_key, *related_objects, &block)
-      self.setup_redis
+    def get_cache(initial_key, *related_objects, &block)
+      setup_redis
+
+      # check objects are valid
+      related_objects.map{|o| raise "Objects passed in must have an id method" unless o.respond_to? "id"}
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
-    
+      # TODO change this to use hash and be at the end as convention
       if related_objects.empty?
         key = "#{initial_key}"
       else
-        key = "#{initial_key}_#{related_objects.flatten.map{|o| "#{o.class.to_s.underscore}[#{o.id}]"}.join("_")}"
+        key = "#{initial_key}_#{related_objects.flatten.map{|o| "#{underscore(o.class.to_s)}[#{o.id}]"}.join("_")}"
       end
       
       if @options[:enable_cache]
@@ -37,7 +41,7 @@ module CoffeeTable
         
         @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key
         if @redis.exists(key)
-          result = self.marshal_value(@redis.get(key))
+          result = marshal_value(@redis.get(key))
         else
           result = yield
           # if its a relation, call all to get an array to cache the result
@@ -49,28 +53,32 @@ module CoffeeTable
           @redis.expire key expiry unless expiry.nil?
         end
       else
-        result = yield
+        unless @options[:enable_cache] && block_given?
+          raise "cache is disabled and no block is given"
+        else
+          result = yield
+        end
       end
       result
     end
   
-    def self.expire_key(key)
-      self.setup_redis
+    def expire_key(key)
+      setup_redis
       @redis.del(key)
       @redis.srem "cache_keys", key
     end
   
-    def self.expire_all
+    def expire_all
       keys.map{|key| expire_key(key)}
     end
   
-    def self.keys
-      self.setup_redis
+    def keys
+      setup_redis
       @redis.smembers "cache_keys"
     end  
   
-    def self.expire_for(*objects)
-      perform_caching = SiteCentral::Application.configure do
+    def expire_for(*objects)
+      perform_caching = Rails.application.configure do
         config.action_controller.perform_caching
       end    
     
@@ -103,17 +111,17 @@ module CoffeeTable
     end
   
     private
-    def self.marshal_value(value)
+    def marshal_value(value)
       begin
         result = Marshal.load(value)
       rescue ArgumentError => e
         puts "Attempting to load class/module #{e.message.split(" ")[-1]}"
         e.message.split(" ")[-1].constantize
-        result = self.marshal_value(value)
+        result = marshal_value(value)
       end
       result
     end
-    def self.setup_redis
+    def setup_redis
       @redis = Redis.new #::Namespace.new(options[:redis_namespace], :redis => Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]}))
     end
   end

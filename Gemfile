@@ -5,8 +5,10 @@ gemspec
 
 gem "redis"
 gem "ap"
+gem "rails"
 
 group :test do
   gem "rspec"
   gem "mock_redis"
+  gem "spork"
 end

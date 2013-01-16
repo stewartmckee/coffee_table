@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'spork'
 require 'mock_redis'
+require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class')
+require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id')
 
 Spork.prefork do
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table.rb')
@@ -13,7 +15,7 @@ Spork.each_run do
       
       redis = mock(:redis)
       Redis.stub!(:new).and_return(MockRedis.new)
-      CoffeeTable::Cache.expire_all
+      CoffeeTable::Cache.new.expire_all
       
     }
 

@@ -1,0 +1,2 @@
+class SampleClassWithoutId
+end
