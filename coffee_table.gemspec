@@ -20,9 +20,7 @@ Gem::Specification.new do |s|
 
   # specify any dependencies here; for example:
   s.add_development_dependency "rspec"
-  s.add_dependency "linguistics"
   s.add_dependency "redis"
-  s.add_dependency "loggability"
   s.add_dependency "rufus-scheduler"
 
 end
