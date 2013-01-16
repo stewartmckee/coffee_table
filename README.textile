@@ -1,0 +1,153 @@
+
+h1. CoffeeTable v0.0.2
+
+!https://secure.travis-ci.org/stewartmckee/coffee_table.png?branch=master!
+!https://gemnasium.com/stewartmckee/coffee_table.png!
+
+h2. Intro 
+  
+  CoffeeTable was born out of a frustration with the standard caching methods around.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable maintains a list of its keys in a known format and when expiry is required for an object it knows which ones to expire
+  
+  
+h3. Installation
+
+  Its a gem...
+
+
+
+  bc. gem install coffee_table
+
+h2. Usage
+
+h3. Cobweb
+
+h4. new(options)
+
+Creates a new crawler object based on a base_url
+
+  * options - Options are passed in as a hash,
+  
+    ** :follow_redirects              - transparently follows redirects and populates the :redirect_through key in the content hash (Default: true)
+    ** :redirect_limit                - sets the limit to be used for concurrent redirects (Default: 10) 
+    ** :processing_queue              - specifies the processing queue for content to be sent to (Default: ContentProcessJob) 
+    ** :debug                         - enables debug output (Default: false)
+    ** :quiet                         - hides default output (Default: false)
+    ** :cache                         - sets the ttl for caching pages, set to nil to disable caching (Default: 300)
+    ** :timeout                       - http timeout for requests (Default: 10)
+    ** :redis_options                 - hash containing the initialization options for redis (e.g. {:host => "redis.mydomain.com"}) (Default: {})
+    ** :internal_urls                 - array of strings representing internal url forms for your site (eg: ['http://test.com/*', 'http://blog.test.com/*', 'http://externaltest.com/*']) (Default: [], although your first url's scheme, host and domain are added)
+    ** :first_page_redirect_internal  - if true and the first page crawled is a redirect, it will add the final destination of redirects to the internal_urls (e.g. http://www.test.com gets redirected to http://test.com) (Default: true)
+    ** :crawl_id                      - the id used internally for identifying the crawl.  Can be used by the processing job to seperate crawls
+    ** :internal_urls                 - an array of urls with * wildcards that represent urls internal to the site (ie pages within the same domain)
+    ** :external_urls                 - an array of urls with * wildcards that represent urls external to the site (overrides internal_urls)
+    ** :obey_robots                   - boolean determining if robots.txt should be honoured. (default: false)
+    ** :user_agent                    - user agent string to match in robots.txt (not sent as user_agent of requests yet) (default: cobweb)
+    ** :crawl_limit_by_page           - sets the crawl counter to only use html page types when counting objects crawled
+    ** :valid_mime_types              - an array of mime types that takes wildcards (eg 'text/*') defaults to ['*/*']
+    ** :direct_call_process_job       - boolean that specifies whether objects should be passed directly to a processing method or should be put onto a queue
+    ** :raise_exceptions              - defaults to handling exceptions with debug output, setting this to true will raise exceptions in your app
+    
+    
+bc. crawler = Cobweb.new(:follow_redirects => false)
+
+h4. start(base_url)
+
+Starts a crawl through resque.  Requires the :processing_queue to be set to a valid class for the resque job to work with the data retrieved.
+
+  * base_url - the url to start the crawl from
+  
+Once the crawler starts, if the first page is redirected (eg from http://www.test.com to http://test.com) then the endpoint scheme, host and domain is added to the internal_urls automatically.
+
+bc. crawler.start("http://www.google.com/")
+
+h4. get(url)
+
+Simple get that obey's the options supplied in new.
+
+  * url - url requested
+
+bc. crawler.get("http://www.google.com/")
+
+h4. head(url)
+
+Simple get that obey's the options supplied in new.
+
+  * url - url requested
+
+bc. crawler.head("http://www.google.com/")
+
+
+h4. Processing Queue
+
+The :processing_queue option is used to specify the class that contains the resque perform method to pass the content onto.  This class should be defined in your application to perform any tasks you wish to the content.  There are two options however, for running this.  Firstly, the default settings will push the content crawled onto a resque queue for that class.  This allows you the flexibility of running in queues on seperate machines etc.  The main drawback to this is that all your content is stored in redis within the queue.  This can be memory intensive if you are crawling large sites, or have large content that is being crawled.  To get around this you can specify that the crawl_job calls the perform method on the processing queue class directly, thereby not using memory in redis for the content.  This is performed by using the :direct_call_process_job. If you set that option to 'true' then instead of the job being queued, it will be executed within the crawl_job queue.
+
+
+h3. CobwebCrawler
+
+CobwebCrawler is the standalone crawling class.  If you don't want to use redis and just want to crawl the site within your ruby process, you can use this class.
+
+bc. crawler = CobwebCrawler.new(:cache => 600) 
+statistics = crawler.crawl("http://www.pepsico.com")
+
+You can also run within a block and get access to each page as it is being crawled.
+
+bc. statistics = CobwebCrawler.new(:cache => 600).crawl("http://www.pepsico.com") do |page|
+  puts "Just crawled #{page[:url]} and got a status of #{page[:status_code]}."
+end
+puts "Finished Crawl with #{statistics[:page_count]} pages and #{statistics[:asset_count]} assets."
+
+h3. CobwebCrawlHelper
+
+The CobwebCrawlHelper class is a helper class to assist in getting information about a crawl and to perform functions against the crawl
+
+bc. crawl = CobwebCrawlHelper.new(options)
+
+  * options - the hash of options passed into Cobweb.new (must include a :crawl_id)
+  
+
+
+h2. Contributing/Testing
+
+  Feel free to contribute small or large bits of code, just please make sure that there are rspec test for the features your submitting.  We also test on travis at http://travis-ci.org/#!/stewartmckee/cobweb if you want to see the state of the project.
+  
+    Continuous integration testing is performed by the excellent Travis: http://travis-ci.org/#!/stewartmckee/cobweb
+
+h2. Todo
+
+  * Tidy up classes with link parsing
+  * Refactoring of code to simplify design
+  * Remove requirement of redis from standalone crawler
+  * Add redis settings to standalone crawler (ie to connect to remote redis)
+  * Add ability to start and stop crawls from web interface
+  * Allow crawler to start as web interface only (ie not run crawls at start)
+  * Fix content encoding issue requiring separate process job
+  * DRY the cobweb get/head calls, its got a lot of duplication
+  * Investigate using event machine for single threaded crawling
+
+h3. Big changes
+
+  * Refactor into a module and refactor class names to remove cobweb and increase simplicity
+
+h2. License
+
+h3. The MIT License
+
+Copyright (c) 2010 6Central Limited
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
