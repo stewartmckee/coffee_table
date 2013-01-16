@@ -103,12 +103,17 @@ module CoffeeTable
       if perform_caching
         deleted_keys = []
         unless objects.empty?
-          self.keys.each do |key|
+          keys.each do |key|
             expire = true
             objects.each do |object|
               mod_key = "_#{key}_"
               if object.class == String
                 unless mod_key.include?("_#{object}_") or mod_key.include?("_#{object.en.plural}_")
+                  expire = false
+                end
+              elsif object.class == Class
+                object_type = underscore(object.class.to_s)
+                unless mod_key.include?("_#{object_type.to_sym}[") or mod_key.include?("_#{object_type.en.plural}_")
                   expire = false
                 end
               else

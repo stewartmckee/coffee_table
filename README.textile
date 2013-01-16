@@ -19,6 +19,62 @@ h3. CoffeeTable::Cache
 
 h4. new(options)
 
-Creates a new cache object
+Creates a new cache object.  You can pass various options into this method to set configuration options for the cache.
 
-  * options - Options are passed in as a hash,
+  * :enable_cache  This defaults to true, but can be set to false to disable the cache
+  * :redis_namespace defaults to ":coffee_table" and is set to seperate out the keys from other redis users
+  * :redis_server defaults to "127.0.0.1"
+  * :redis_port defaults to 6789
+  
+
+h4. get_cache(initial_key, *related_objects, &block)
+
+This is the main caching method.  Pass into this method as a block the chunck of code you want cached.  The first parameter is your key for this data and is then followed by as many objects as are valid for this block of code.  You can even pass in arrays and they will be expanded.  The only requirement for the objects being passed in is that they respond to an 'id' method.  If the last parameter is a Hash, this will be used as per cache options.  These options can be used for expiry of cache. 
+
+bc. user_details = @coffee_table.get_cache(:user_detail, @user, :expiry => 600) do
+      @user.get_expensive_user_details
+    end
+
+Each time this is ran, a unique cache key is generated, assuming the @user.id is '1' the cache key would be "user_detail_user[1]".  The more objects the longer the key.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
+
+If you wish to specify a whole model type, for example, all users from above, you would pass in the class, for example:
+
+bc. user_details = @coffee_table.get_cache(:user_detail, User) do
+      @user.get_something_that_uses_all_users
+    end
+
+In this case the key will be "user_detail_users", for which you can expire_for(User) which will clear regardless of the specific object id.
+
+The only required field is the first parameter, so you can create keys and cache as you normally would, ignoring the objects.
+
+h4. expire_key(key)
+
+This method directly expires a known key.
+
+bc. @coffee_table.expire_key("user_detail_user[1]")
+
+The above code would expire the above example of cache.
+
+h4. expire_all
+
+This method clears the whole cache.
+
+bc. @coffee_table.expire_all
+
+h4. keys
+
+This is a helper method to return the list of keys currently in the system.  This list is maintained when cache is created and expired.
+
+h4. expire_for(*objects)
+
+This is the main expire method.  In order to expire a cache, you only need to pass in any objects that would be invalidated.  With the above example this would be as follows.
+
+bc. @coffee_table.expire_for(@user)
+
+This would search through the keys to find any that contain this particular user.  If it finds any, it will invalidate that cache entry.
+
+You can also expire for a whole class type
+
+bc. @coffee_table.expire_for(User)
+
+this would expire all keys that reference the user objects.

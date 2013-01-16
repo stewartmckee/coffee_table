@@ -69,9 +69,7 @@ describe CoffeeTable do
         result = @coffee_table.get_cache(:test_key) do
           "this is a changed value"
         end
-        
         @coffee_table.keys.should include "test_key"
-        
       end
     end
     context "with related objects" do
@@ -94,6 +92,9 @@ describe CoffeeTable do
         }.should raise_exception "Objects passed in must have an id method"
         
       end
+
+      it "should create a universal key if the objects passed in are an uninitialised class"
+
     end
     context "with expiry" do
       it "keys should update when cache expires" do
@@ -264,6 +265,21 @@ describe CoffeeTable do
       @coffee_table.keys.count.should == 3
       @coffee_table.expire_for(SampleClass.new(1))
       @coffee_table.keys.count.should == 2
+    end
+
+    it "should delete a key if the object is at the end of they key" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for(SampleClass.new(3))
+      @coffee_table.keys.count.should == 2
+    end
+
+    it "should expire all keys relating to a class if uninitialised class is passed in" do
+      @coffee_table.get_cache(:fourth_key) do
+        "object4"
+      end
+      @coffee_table.keys.count.should == 4
+      @coffee_table.expire_for(SampleClass)
+      @coffee_table.keys.count.should == 1
     end
   end
     
