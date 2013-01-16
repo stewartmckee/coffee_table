@@ -4,8 +4,7 @@ source "http://rubygems.org"
 gemspec
 
 gem "redis"
-gem "ap"
-gem "rails"
+gem "awesome_print"
 
 group :test do
   gem "rspec"
