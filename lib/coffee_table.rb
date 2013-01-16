@@ -1,15 +1,12 @@
 require "coffee_table/version"
 require "utility"
 require "redis"
-require 'linguistics'
 require 'rufus/scheduler'
 
 module CoffeeTable
   class Cache
 
     include CoffeeTable::Utility
-  
-    Linguistics.use( :en )
 
     def initialize(options={})
       @options = options
@@ -108,17 +105,17 @@ module CoffeeTable
             objects.each do |object|
               mod_key = "_#{key}_"
               if object.class == String
-                unless mod_key.include?("_#{object}_") or mod_key.include?("_#{object.en.plural}_")
+                unless mod_key.include?("_#{object}_") or mod_key.include?("_#{object}_")
                   expire = false
                 end
               elsif object.class == Class
                 object_type = underscore(object.class.to_s)
-                unless mod_key.include?("_#{object_type.to_sym}[") or mod_key.include?("_#{object_type.en.plural}_")
+                unless mod_key.include?("_#{object_type.to_sym}[") or mod_key.include?("_#{object_type}_")
                   expire = false
                 end
               else
                 object_type = underscore(object.class.to_s)
-                unless mod_key.include?("_#{object_type.to_sym}[#{object.id}]_") or mod_key.include?("_#{object_type.en.plural}_")
+                unless mod_key.include?("_#{object_type.to_sym}[#{object.id}]_") or mod_key.include?("_#{object_type}_")
                   expire = false
                 end
               end 

@@ -5,8 +5,6 @@ gemspec
 
 gem "redis"
 gem "awesome_print"
-gem "linguistics"
-gem "loggability"
 gem "rufus-scheduler"
 
 group :test do
