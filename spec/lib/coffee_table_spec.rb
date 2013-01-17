@@ -57,14 +57,39 @@ describe CoffeeTable do
       TESTVAR.should == "testvar"
       
     end
-    context "without related objects" do
-      it "should create a key with just the initial key" do        
+
+    context "keys" do
+      it "should create a key with just the initial key" do
         result = @coffee_table.get_cache(:test_key) do
           "this is a changed value"
         end
-        @coffee_table.keys.should include "test_key"
+        @coffee_table.keys.should == ["test_key"]
       end
+
+      it "should create key from class" do
+        result = @coffee_table.get_cache(:test_key, SampleClass) do
+          "this is a changed value"
+        end
+        @coffee_table.keys.should == ["test_key|sample_classes"]
+      end
+      
+      it "should use class name for keys" do
+        result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
+          "this is a changed value"
+        end
+        @coffee_table.keys.should == ["test_key|sample_class[2]"]
+      end
+
+      it "should use id from class in key" do
+        result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
+          "this is a changed value"
+        end
+        @coffee_table.keys.should == ["test_key|sample_class[2]"]
+      end
+
     end
+
+
     context "with related objects" do
       it "should create a key from the id's of the related objects" do
         test_object = SampleClass.new(9938)
@@ -72,7 +97,7 @@ describe CoffeeTable do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key_sample_class[9938]"
+        @coffee_table.keys.should include "test_key|sample_class[9938]"
         
       end
       it "should raise an exception if a related object does not respond_to id" do
@@ -87,11 +112,12 @@ describe CoffeeTable do
       end
 
       it "should create a universal key if the objects passed in are an uninitialised class" do
+
         result = @coffee_table.get_cache(:test_key, SampleClass) do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key_sample_classes"          
+        @coffee_table.keys.should include "test_key|sample_classes"          
       end
 
     end
@@ -164,6 +190,7 @@ describe CoffeeTable do
   
   describe "expire_all" do
     before(:each) do
+
       object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
       object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
       object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
@@ -231,9 +258,9 @@ describe CoffeeTable do
       @coffee_table.get_cache(:third_key, @object3) do
         "object3"
       end
-      @coffee_table.keys.sort.should == ["first_key_sample_class[1]_sample_class[2]_sample_class[3]",
-                               "second_key_sample_class[4]_sample_class[2]_sample_class[5]",
-                               "third_key_sample_class[7]_sample_class[2]_sample_class[8]"].sort
+      @coffee_table.keys.sort.should == ["first_key|sample_class[1]|sample_class[2]|sample_class[3]",
+                               "second_key|sample_class[4]|sample_class[2]|sample_class[5]",
+                               "third_key|sample_class[7]|sample_class[2]|sample_class[8]"].sort
     end
 
   end
@@ -253,6 +280,24 @@ describe CoffeeTable do
       @coffee_table.get_cache(:third_key, object3) do
         "object3"
       end
+    end
+
+    it "should expire based on the initial key" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for(:second_key)
+      @coffee_table.keys.count.should == 2
+    end
+
+    it "should expire based on a simple string" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for("sample_class[4]")
+      @coffee_table.keys.count.should == 2
+    end
+
+    it "should not expire based on a part match" do
+      @coffee_table.keys.count.should == 3
+      @coffee_table.expire_for("impl")
+      @coffee_table.keys.count.should == 3
     end
 
     it "should not delete any keys if object is not present" do

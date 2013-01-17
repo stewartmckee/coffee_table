@@ -2,6 +2,7 @@ require "coffee_table/version"
 require "utility"
 require "redis"
 require 'rufus/scheduler'
+require 'active_support/inflector'
 
 module CoffeeTable
   class Cache
@@ -39,7 +40,7 @@ module CoffeeTable
       if related_objects.empty?
         key = "#{initial_key}"
       else
-        key = "#{initial_key}_#{related_objects.flatten.map{|o| key_for_object(o)}.join("_")}"
+        key = "#{initial_key}|#{related_objects.flatten.map{|o| key_for_object(o)}.join("|")}"
       end
       
       if @options[:enable_cache]
@@ -97,23 +98,23 @@ module CoffeeTable
     
       if perform_caching
         deleted_keys = []
-        unless objects.empty?
+        unless objects.count == 0
           keys.each do |key|
             expire = true
             objects.each do |object|
-              mod_key = "_#{key}_"
-              if object.class == String
-                unless mod_key.include?("_#{object}_") or mod_key.include?("_#{object}_")
+              mod_key = "|#{key}|"
+              if object.class == String || object.class == Symbol
+                unless mod_key.include?("|#{object}|")
                   expire = false
                 end
               elsif object.class == Class
-                object_type = underscore(object.class.to_s)
-                unless mod_key.include?("_#{object_type.to_sym}[") or mod_key.include?("_#{object_type}_")
+                object_type = underscore(object.to_s)
+                unless mod_key.include?("|#{object_type}[") or mod_key.include?("|#{ActiveSupport::Inflector.pluralize(object_type)}|")
                   expire = false
                 end
               else
                 object_type = underscore(object.class.to_s)
-                unless mod_key.include?("_#{object_type.to_sym}[#{object.id}]_") or mod_key.include?("_#{object_type}_")
+                unless mod_key.include?("|#{object_type.to_sym}[#{object.id}]|") or mod_key.include?("|#{object_type}|")
                   expire = false
                 end
               end 
@@ -147,7 +148,7 @@ module CoffeeTable
     end
     def key_for_object(o)
       if o.class == Class
-        "#{underscore(o.to_s)}es"
+        "#{ActiveSupport::Inflector.pluralize(underscore(o.to_s))}"
       else
         "#{underscore(o.class.to_s)}[#{o.id}]"
       end
