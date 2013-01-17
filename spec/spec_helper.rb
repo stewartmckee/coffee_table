@@ -6,6 +6,8 @@ require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/
 
 Spork.prefork do
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/coffee_table_block_missing_error.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/coffee_table_invalid_object_error.rb')
 end
 
 Spork.each_run do

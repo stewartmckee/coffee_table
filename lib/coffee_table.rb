@@ -23,6 +23,8 @@ module CoffeeTable
 
     def get_cache(initial_key, *related_objects, &block)
 
+      raise CoffeeTableBlockMissingError, "No block given to generate cache from" unless block_given?
+
       # extract the options hash if it is present
       options = {}
       if related_objects[-1].instance_of? Hash
@@ -31,7 +33,7 @@ module CoffeeTable
       end
 
       # check objects are valid
-      related_objects.flatten.map{|o| raise "Objects passed in must have an id method" unless o.respond_to? "id"}
+      related_objects.flatten.map{|o| raise CoffeeTableInvalidObjectError, "Objects passed in must have an id method" unless o.respond_to? "id"}
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       if related_objects.empty?
@@ -66,11 +68,7 @@ module CoffeeTable
           end
         end
       else
-        unless @options[:enable_cache] && block_given?
-          raise "cache is disabled and no block is given"
-        else
-          result = yield
-        end
+        result = yield
       end
       result
     end

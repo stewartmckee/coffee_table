@@ -18,20 +18,13 @@ describe CoffeeTable do
       CoffeeTable::Cache.new({:test => "asdf"})
     end
     it "should not raise exception when hash not given" do
-      lambda{CoffeeTable::Cache.new}.should_not raise_exception
+      lambda{CoffeeTable::Cache.new}.should_not raise_exception CoffeeTableBlockMissingError
     end
   end
   
   describe "get_cache" do
     it "should raise an exception when block not given" do
-      lambda{@coffee_table.get_cache("asdf")}.should raise_exception "no block given (yield)"
-    end
-    it "should not raise an exception if cache value is available and no block given" do
-      result = @coffee_table.get_cache("test_key") do
-        "this is a valid result"
-      end
-      
-      @coffee_table.get_cache("test_key").should == "this is a valid result"
+      lambda{@coffee_table.get_cache("asdf")}.should raise_exception CoffeeTableBlockMissingError
     end
     it "should execute block when cache value not available" do
       result = @coffee_table.get_cache("asdf") do
@@ -89,7 +82,7 @@ describe CoffeeTable do
           result = @coffee_table.get_cache(:test_key, test_object) do
             "this is a changed value"
           end
-        }.should raise_exception "Objects passed in must have an id method"
+        }.should raise_exception CoffeeTableInvalidObjectError, "Objects passed in must have an id method"
         
       end
 
