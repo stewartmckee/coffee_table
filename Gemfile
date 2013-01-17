@@ -6,6 +6,7 @@ gemspec
 gem "redis"
 gem "awesome_print"
 gem "rufus-scheduler"
+gem "activesupport"
 
 group :test do
   gem "rspec"
