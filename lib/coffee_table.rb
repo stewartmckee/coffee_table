@@ -33,13 +33,13 @@ module CoffeeTable
       end
 
       # check objects are valid
-      related_objects.flatten.map{|o| raise CoffeeTableInvalidObjectError, "Objects passed in must have an id method" unless o.respond_to? "id"}
+      related_objects.flatten.map{|o| raise CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       if related_objects.empty?
         key = "#{initial_key}"
       else
-        key = "#{initial_key}_#{related_objects.flatten.map{|o| "#{underscore(o.class.to_s)}[#{o.id}]"}.join("_")}"
+        key = "#{initial_key}_#{related_objects.flatten.map{|o| key_for_object(o)}.join("_")}"
       end
       
       if @options[:enable_cache]
@@ -141,6 +141,16 @@ module CoffeeTable
     end
     def setup_redis
       @redis = Redis.new #::Namespace.new(options[:redis_namespace], :redis => Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]}))
+    end
+    def object_valid?(o)
+      o.respond_to?(:id) || o.class == Class
+    end
+    def key_for_object(o)
+      if o.class == Class
+        "#{underscore(o.to_s)}es"
+      else
+        "#{underscore(o.class.to_s)}[#{o.id}]"
+      end
     end
   end
 end

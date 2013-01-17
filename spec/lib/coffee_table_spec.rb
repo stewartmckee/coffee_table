@@ -82,11 +82,17 @@ describe CoffeeTable do
           result = @coffee_table.get_cache(:test_key, test_object) do
             "this is a changed value"
           end
-        }.should raise_exception CoffeeTableInvalidObjectError, "Objects passed in must have an id method"
+        }.should raise_exception CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class"
         
       end
 
-      it "should create a universal key if the objects passed in are an uninitialised class"
+      it "should create a universal key if the objects passed in are an uninitialised class" do
+        result = @coffee_table.get_cache(:test_key, SampleClass) do
+          "this is a changed value"
+        end
+        
+        @coffee_table.keys.should include "test_key_sample_classes"          
+      end
 
     end
     context "with expiry" do
