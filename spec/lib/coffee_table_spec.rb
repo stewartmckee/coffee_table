@@ -132,10 +132,10 @@ describe CoffeeTable do
       end
       it "should not execute block during cache period" do
         @coffee_table.get_cache("asdf", :expiry => 1) do
-          "this is a value"
+          'this is a value'
         end
         result = @coffee_table.get_cache("asdf") do
-          "this is a changed value"
+          'this is a changed value'
         end      
         result.should == "this is a value"      
 
@@ -184,6 +184,38 @@ describe CoffeeTable do
       @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
       @coffee_table.expire_key("fourth_key")
       @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
+
+    end
+
+    context "changed block" do
+
+      it "should invalidate cache when block has changed" do
+        @coffee_table.get_cache(:test_key) do
+          "object1"
+        end
+
+        result = @coffee_table.get_cache(:test_key) do
+          "object2"
+        end
+
+        result.should == "object2"
+      end
+
+      it "should not invalidate block when block has not changed" do
+        puts "-----------------------"
+        object = "object1"
+        @coffee_table.get_cache(:test_key) do
+          object
+        end
+
+        object = "object2"
+        result = @coffee_table.get_cache(:test_key) do
+          object
+        end
+        puts "-----------------------"
+
+        result.should == "object1"
+      end
 
     end
   end

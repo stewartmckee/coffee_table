@@ -3,6 +3,7 @@ require "utility"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
+require "sourcify"
 
 module CoffeeTable
   class Cache
@@ -35,6 +36,8 @@ module CoffeeTable
 
       # check objects are valid
       related_objects.flatten.map{|o| raise CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
+
+      puts block.to_raw_source
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       if related_objects.empty?
