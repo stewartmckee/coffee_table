@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    coffee_table (0.0.3)
+    coffee_table (0.1.0)
       activesupport
       redis
       rufus-scheduler
