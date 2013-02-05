@@ -1,0 +1,7 @@
+
+0.1.1 
+  
+  - Started a change log
+  - Added sourcify to md5 hash the contents of the block to remove issues around code changes not being used due to cache
+  - Added a key class to handle key generation and management
+

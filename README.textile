@@ -1,7 +1,6 @@
 
-h1. CoffeeTable v0.0.3
+h1. CoffeeTable v0.1.0
 
-!https://secure.travis-ci.org/stewartmckee/coffee_table.png?branch=master!
 !https://gemnasium.com/stewartmckee/coffee_table.png!
 
 h2. Intro 
@@ -24,6 +23,7 @@ Creates a new cache object.  You can pass various options into this method to se
   * :redis_namespace defaults to ":coffee_table" and is set to seperate out the keys from other redis users
   * :redis_server defaults to "127.0.0.1"
   * :redis_port defaults to 6789
+  * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
   
 
 h4. get_cache(initial_key, *related_objects, &block)
