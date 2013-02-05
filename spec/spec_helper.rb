@@ -1,4 +1,7 @@
 require 'rubygems'
+require 'bundler/setup'
+
+require 'digest/md5'
 require 'spork'
 require 'mock_redis'
 require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class')
@@ -6,6 +9,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/
 
 Spork.prefork do
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/key.rb')
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/coffee_table_block_missing_error.rb')
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/coffee_table_invalid_object_error.rb')
 end
@@ -35,3 +39,6 @@ def load_binary_sample(filename)
   File.open(File.dirname(__FILE__) + "/samples/" + filename, 'rb')
 end
 
+def md5_block(&block)
+  Digest::MD5.hexdigest(block.to_source)
+end

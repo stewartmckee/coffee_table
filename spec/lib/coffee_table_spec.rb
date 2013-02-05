@@ -34,57 +34,58 @@ describe CoffeeTable do
       result.should == "this is a value"      
     end
     it "should return cached value when cache available" do
+      value = "this is a value"
       @coffee_table.get_cache("asdf") do
-        "this is a value"
+        value
       end
+      value = "this is a changed value"
       result = @coffee_table.get_cache("asdf") do
-        "this is a changed value"
+        value
       end
         
       result.should == "this is a value"      
       
     end
-    it "should execute block when store not available" do
-      @coffee_table.get_cache(:test_key) do
-        TESTVAR = "testvar"
-        "this is a value"
-      end
-      @coffee_table.get_cache(:test_key) do
-        TESTVAR = "testvar2"
-        "this is a value"
-      end
-      
-      TESTVAR.should == "testvar"
-      
-    end
 
     context "keys" do
       it "should create a key with just the initial key" do
+        md5 = md5_block do
+          "this is a changed value"
+        end
         result = @coffee_table.get_cache(:test_key) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key"]
+        @coffee_table.keys.should == ["test_key|#{md5}"]
       end
 
       it "should create key from class" do
+        md5 = md5_block do
+          "this is a changed value"
+        end
         result = @coffee_table.get_cache(:test_key, SampleClass) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|sample_classes"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_classes"]
       end
       
       it "should use class name for keys" do
+        md5 = md5_block do
+          "this is a changed value"
+        end
         result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|sample_class[2]"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
       end
 
       it "should use id from class in key" do
+        md5 = md5_block do
+          "this is a changed value"
+        end
         result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|sample_class[2]"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
       end
 
     end
@@ -93,11 +94,14 @@ describe CoffeeTable do
     context "with related objects" do
       it "should create a key from the id's of the related objects" do
         test_object = SampleClass.new(9938)
+        md5 = md5_block do
+          "this is a changed value"
+        end
         result = @coffee_table.get_cache(:test_key, test_object) do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key|sample_class[9938]"
+        @coffee_table.keys.should include "test_key|#{md5}|sample_class[9938]"
         
       end
       it "should raise an exception if a related object does not respond_to id" do
@@ -112,12 +116,15 @@ describe CoffeeTable do
       end
 
       it "should create a universal key if the objects passed in are an uninitialised class" do
+        md5 = md5_block do
+          "this is a changed value"
+        end
 
         result = @coffee_table.get_cache(:test_key, SampleClass) do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key|sample_classes"          
+        @coffee_table.keys.should include "test_key|#{md5}|sample_classes"          
       end
 
     end
@@ -131,11 +138,13 @@ describe CoffeeTable do
         @coffee_table.keys.count.should == 0
       end
       it "should not execute block during cache period" do
+        value = 'this is a value'
         @coffee_table.get_cache("asdf", :expiry => 1) do
-          'this is a value'
+          value
         end
+        value = 'this is a changed value'
         result = @coffee_table.get_cache("asdf") do
-          'this is a changed value'
+          value
         end      
         result.should == "this is a value"      
 
@@ -154,6 +163,19 @@ describe CoffeeTable do
   end
   
   describe "expire_key" do
+
+    before(:each) do
+      @proc_md51 = md5_block do
+        "object1"
+      end
+      @proc_md52 = md5_block do
+        "object2"
+      end
+      @proc_md53 = md5_block do
+        "object3"
+      end
+    end
+
     it "should expire the specified key" do
       @coffee_table.get_cache(:first_key) do
         "object1"
@@ -165,12 +187,22 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
       @coffee_table.expire_key("second_key")
-      @coffee_table.keys.sort.should == ["first_key", "third_key"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "third_key|#{@proc_md53}"].sort
 
     end
     it "should not expire anything if no matches" do
+      @proc_md51 = md5_block do
+        "object1"
+      end
+      @proc_md52 = md5_block do
+        "object2"
+      end
+      @proc_md53 = md5_block do
+        "object3"
+      end
+
       @coffee_table.get_cache(:first_key) do
         "object1"
       end
@@ -181,9 +213,9 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
       @coffee_table.expire_key("fourth_key")
-      @coffee_table.keys.sort.should == ["first_key", "second_key", "third_key"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
 
     end
 
@@ -202,7 +234,6 @@ describe CoffeeTable do
       end
 
       it "should not invalidate block when block has not changed" do
-        puts "-----------------------"
         object = "object1"
         @coffee_table.get_cache(:test_key) do
           object
@@ -212,12 +243,31 @@ describe CoffeeTable do
         result = @coffee_table.get_cache(:test_key) do
           object
         end
-        puts "-----------------------"
 
         result.should == "object1"
       end
-
     end
+  end
+
+  context "ignoring code changes" do
+
+    before(:each) do
+      @coffee_table = CoffeeTable::Cache.new(:ignore_code_changes => true)
+    end
+
+    it "should not invalidate cache when block has changed" do
+      @coffee_table.get_cache(:test_key) do
+        "object1"
+      end
+
+      result = @coffee_table.get_cache(:test_key) do
+        "object2"
+      end
+
+      result.should == "object1"
+    end
+
+
   end
   
   describe "expire_all" do
@@ -258,6 +308,16 @@ describe CoffeeTable do
       @object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
       @object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
 
+      @proc_md51 = md5_block do
+        "object1"
+      end
+      @proc_md52 = md5_block do
+        "object2"
+      end
+      @proc_md53 = md5_block do
+        "object3"
+      end
+
     end
 
     it "should return an array of string" do
@@ -275,9 +335,9 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key",
-                               "second_key",
-                               "third_key"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}",
+                               "second_key|#{@proc_md52}",
+                               "third_key|#{@proc_md53}"].sort
 
     end
     it "should return key created with objects and ids" do
@@ -290,9 +350,9 @@ describe CoffeeTable do
       @coffee_table.get_cache(:third_key, @object3) do
         "object3"
       end
-      @coffee_table.keys.sort.should == ["first_key|sample_class[1]|sample_class[2]|sample_class[3]",
-                               "second_key|sample_class[4]|sample_class[2]|sample_class[5]",
-                               "third_key|sample_class[7]|sample_class[2]|sample_class[8]"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]",
+                               "second_key|#{@proc_md52}|sample_class[4]|sample_class[2]|sample_class[5]",
+                               "third_key|#{@proc_md53}|sample_class[7]|sample_class[2]|sample_class[8]"].sort
     end
 
   end
