@@ -1,5 +1,9 @@
 
-0.1.1 
+0.1.1
+  - updated documentation
+  - refacotred get_cache method to fetch
+
+0.1.0
   
   - Started a change log
   - Added sourcify to md5 hash the contents of the block to remove issues around code changes not being used due to cache

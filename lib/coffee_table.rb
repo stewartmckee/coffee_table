@@ -11,6 +11,8 @@ module CoffeeTable
 
     include CoffeeTable::Utility
 
+
+    # initialize for coffee_table.  takes options to setup behaviour of cache
     def initialize(options={})
       @options = options
 
@@ -25,7 +27,8 @@ module CoffeeTable
       
     end
 
-    def get_cache(initial_key, *related_objects, &block)
+    # main
+    def fetch(initial_key, *related_objects, &block)
 
       raise CoffeeTableBlockMissingError, "No block given to generate cache from" unless block_given?
 
@@ -134,6 +137,8 @@ module CoffeeTable
         deleted_keys
       end
     end
+
+    alias :get_cache :fetch
   
     private
     def marshal_value(value)
@@ -149,5 +154,6 @@ module CoffeeTable
     def object_valid?(o)
       o.respond_to?(:id) || o.class == Class
     end
+
   end
 end

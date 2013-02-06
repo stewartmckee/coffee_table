@@ -1,13 +1,13 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe CoffeeTable do
+describe CoffeeTable::Cache do
   
   before(:each) do
     @coffee_table = CoffeeTable::Cache.new
   end
   
   specify { CoffeeTable::Cache.should respond_to :new}
-  specify { @coffee_table.should respond_to :get_cache}
+  specify { @coffee_table.should respond_to :fetch}
   specify { @coffee_table.should respond_to :expire_key}
   specify { @coffee_table.should respond_to :expire_all}
   specify { @coffee_table.should respond_to :keys}
@@ -22,12 +22,12 @@ describe CoffeeTable do
     end
   end
   
-  describe "get_cache" do
+  describe "fetch" do
     it "should raise an exception when block not given" do
-      lambda{@coffee_table.get_cache("asdf")}.should raise_exception CoffeeTableBlockMissingError
+      lambda{@coffee_table.fetch("asdf")}.should raise_exception CoffeeTableBlockMissingError
     end
     it "should execute block when cache value not available" do
-      result = @coffee_table.get_cache("asdf") do
+      result = @coffee_table.fetch("asdf") do
         "this is a value"
       end
       
@@ -35,11 +35,11 @@ describe CoffeeTable do
     end
     it "should return cached value when cache available" do
       value = "this is a value"
-      @coffee_table.get_cache("asdf") do
+      @coffee_table.fetch("asdf") do
         value
       end
       value = "this is a changed value"
-      result = @coffee_table.get_cache("asdf") do
+      result = @coffee_table.fetch("asdf") do
         value
       end
         
@@ -52,7 +52,7 @@ describe CoffeeTable do
         md5 = md5_block do
           "this is a changed value"
         end
-        result = @coffee_table.get_cache(:test_key) do
+        result = @coffee_table.fetch(:test_key) do
           "this is a changed value"
         end
         @coffee_table.keys.should == ["test_key|#{md5}"]
@@ -62,7 +62,7 @@ describe CoffeeTable do
         md5 = md5_block do
           "this is a changed value"
         end
-        result = @coffee_table.get_cache(:test_key, SampleClass) do
+        result = @coffee_table.fetch(:test_key, SampleClass) do
           "this is a changed value"
         end
         @coffee_table.keys.should == ["test_key|#{md5}|sample_classes"]
@@ -72,7 +72,7 @@ describe CoffeeTable do
         md5 = md5_block do
           "this is a changed value"
         end
-        result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
+        result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
         @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
@@ -82,7 +82,7 @@ describe CoffeeTable do
         md5 = md5_block do
           "this is a changed value"
         end
-        result = @coffee_table.get_cache(:test_key, SampleClass.new(2)) do
+        result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
         @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
@@ -97,7 +97,7 @@ describe CoffeeTable do
         md5 = md5_block do
           "this is a changed value"
         end
-        result = @coffee_table.get_cache(:test_key, test_object) do
+        result = @coffee_table.fetch(:test_key, test_object) do
           "this is a changed value"
         end
         
@@ -108,7 +108,7 @@ describe CoffeeTable do
         test_object = SampleClassWithoutId.new
 
         lambda {
-          result = @coffee_table.get_cache(:test_key, test_object) do
+          result = @coffee_table.fetch(:test_key, test_object) do
             "this is a changed value"
           end
         }.should raise_exception CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class"
@@ -120,7 +120,7 @@ describe CoffeeTable do
           "this is a changed value"
         end
 
-        result = @coffee_table.get_cache(:test_key, SampleClass) do
+        result = @coffee_table.fetch(:test_key, SampleClass) do
           "this is a changed value"
         end
         
@@ -130,7 +130,7 @@ describe CoffeeTable do
     end
     context "with expiry" do
       it "keys should update when cache expires" do
-        @coffee_table.get_cache(:test_key, :expiry => 0.2) do
+        @coffee_table.fetch(:test_key, :expiry => 0.2) do
           "object1"
         end
         @coffee_table.keys.count.should == 1
@@ -139,22 +139,22 @@ describe CoffeeTable do
       end
       it "should not execute block during cache period" do
         value = 'this is a value'
-        @coffee_table.get_cache("asdf", :expiry => 1) do
+        @coffee_table.fetch("asdf", :expiry => 1) do
           value
         end
         value = 'this is a changed value'
-        result = @coffee_table.get_cache("asdf") do
+        result = @coffee_table.fetch("asdf") do
           value
         end      
         result.should == "this is a value"      
 
       end
       it "should execute block and return value when cache has expired" do
-        @coffee_table.get_cache("asdf", :expiry => 1) do
+        @coffee_table.fetch("asdf", :expiry => 1) do
           "this is a value"
         end
         sleep 2
-        result = @coffee_table.get_cache("asdf") do
+        result = @coffee_table.fetch("asdf") do
           "this is a changed value"
         end      
         result.should == "this is a changed value"      
@@ -177,13 +177,13 @@ describe CoffeeTable do
     end
 
     it "should expire the specified key" do
-      @coffee_table.get_cache(:first_key) do
+      @coffee_table.fetch(:first_key) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key) do
+      @coffee_table.fetch(:second_key) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key) do
+      @coffee_table.fetch(:third_key) do
         "object3"
       end
 
@@ -203,13 +203,13 @@ describe CoffeeTable do
         "object3"
       end
 
-      @coffee_table.get_cache(:first_key) do
+      @coffee_table.fetch(:first_key) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key) do
+      @coffee_table.fetch(:second_key) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key) do
+      @coffee_table.fetch(:third_key) do
         "object3"
       end
 
@@ -219,14 +219,17 @@ describe CoffeeTable do
 
     end
 
+  end
+
+  context "monitoring code changes in block" do
     context "changed block" do
 
       it "should invalidate cache when block has changed" do
-        @coffee_table.get_cache(:test_key) do
+        @coffee_table.fetch(:test_key) do
           "object1"
         end
 
-        result = @coffee_table.get_cache(:test_key) do
+        result = @coffee_table.fetch(:test_key) do
           "object2"
         end
 
@@ -235,39 +238,54 @@ describe CoffeeTable do
 
       it "should not invalidate block when block has not changed" do
         object = "object1"
-        @coffee_table.get_cache(:test_key) do
+        @coffee_table.fetch(:test_key) do
           object
         end
 
         object = "object2"
-        result = @coffee_table.get_cache(:test_key) do
+        result = @coffee_table.fetch(:test_key) do
           object
         end
 
         result.should == "object1"
       end
-    end
-  end
 
-  context "ignoring code changes" do
+      it "should not be affected by whitespace only changes" do
+        object = "object1"
+        @coffee_table.fetch(:test_key) do
+          object
+        end
 
-    before(:each) do
-      @coffee_table = CoffeeTable::Cache.new(:ignore_code_changes => true)
-    end
+        object = "object2"
+        result = @coffee_table.fetch(:test_key) do
 
-    it "should not invalidate cache when block has changed" do
-      @coffee_table.get_cache(:test_key) do
-        "object1"
+                  object
+
+        end
+
+        result.should == "object1"
       end
 
-      result = @coffee_table.get_cache(:test_key) do
-        "object2"
-      end
-
-      result.should == "object1"
     end
 
+    context "ignoring code changes" do
 
+      before(:each) do
+        @coffee_table = CoffeeTable::Cache.new(:ignore_code_changes => true)
+      end
+
+      it "should not invalidate cache when block has changed" do
+        @coffee_table.fetch(:test_key) do
+          "object1"
+        end
+
+        result = @coffee_table.fetch(:test_key) do
+          "object2"
+        end
+
+        result.should == "object1"
+      end
+    end
   end
   
   describe "expire_all" do
@@ -277,13 +295,13 @@ describe CoffeeTable do
       object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
       object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
 
-      @coffee_table.get_cache(:first_key) do
+      @coffee_table.fetch(:first_key) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key) do
+      @coffee_table.fetch(:second_key) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key) do
+      @coffee_table.fetch(:third_key) do
         "object3"
       end
     end
@@ -293,7 +311,7 @@ describe CoffeeTable do
       @coffee_table.expire_all
       @coffee_table.keys.count.should == 0
 
-      result = @coffee_table.get_cache(:first_key) do
+      result = @coffee_table.fetch(:first_key) do
         "changed value"
       end
 
@@ -325,13 +343,13 @@ describe CoffeeTable do
       @coffee_table.keys.map{|key| key.should be_an_instance_of String}
     end
     it "should return key created without objects" do
-      @coffee_table.get_cache(:first_key) do
+      @coffee_table.fetch(:first_key) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key) do
+      @coffee_table.fetch(:second_key) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key) do
+      @coffee_table.fetch(:third_key) do
         "object3"
       end
 
@@ -341,13 +359,13 @@ describe CoffeeTable do
 
     end
     it "should return key created with objects and ids" do
-      @coffee_table.get_cache(:first_key, @object1) do
+      @coffee_table.fetch(:first_key, @object1) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key, @object2) do
+      @coffee_table.fetch(:second_key, @object2) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key, @object3) do
+      @coffee_table.fetch(:third_key, @object3) do
         "object3"
       end
       @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]",
@@ -363,13 +381,13 @@ describe CoffeeTable do
       object2 = [SampleClass.new(4), SampleClass.new(2), SampleClass.new(5)]
       object3 = [SampleClass.new(7), SampleClass.new(2), SampleClass.new(8)]
 
-      @coffee_table.get_cache(:first_key, object1) do
+      @coffee_table.fetch(:first_key, object1) do
         "object1"
       end
-      @coffee_table.get_cache(:second_key, object2) do
+      @coffee_table.fetch(:second_key, object2) do
         "object2"
       end
-      @coffee_table.get_cache(:third_key, object3) do
+      @coffee_table.fetch(:third_key, object3) do
         "object3"
       end
     end
@@ -410,7 +428,7 @@ describe CoffeeTable do
     end
 
     it "should expire all keys relating to a class if uninitialised class is passed in" do
-      @coffee_table.get_cache(:fourth_key) do
+      @coffee_table.fetch(:fourth_key) do
         "object4"
       end
       @coffee_table.keys.count.should == 4
