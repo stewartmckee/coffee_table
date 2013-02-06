@@ -5,7 +5,7 @@ h1. CoffeeTable v0.1.1
 
 h2. Intro 
   
-  CoffeeTable was born out of a frustration with the standard caching methods.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable was designed to take on the role of maintaining the cache keys for you, allowing you to concentrate on what is in the cache.  It works by maintaining a list of its keys in a known format and when expiry is required for an object it knows which ones to expire.  It also hopefully will be a perfromance boost for some cases where you are being overly cautious about clearing cache, a more targeted approach will improve performance.
+  CoffeeTable is a smart fragment caching gem that was born out of a frustration with the standard caching methods.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable was designed to take on the role of maintaining the cache keys for you, allowing you to concentrate on what is in the cache.  It works by maintaining a list of its keys in a known format and when expiry is required for an object it knows which ones to expire.  It also hopefully will be a perfromance boost for some cases where you are being overly cautious about clearing cache, a more targeted approach will improve performance.
     
 h3. Installation
 
@@ -36,7 +36,7 @@ Creates a new cache object.  You can pass options into this method to modify the
   * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
   
 
-h4. get_cache(initial_key, *related_objects, &block)
+h4. fetch(initial_key, *related_objects, &block)
 
 This is the main caching method.  Pass into this method as a block the chunck of code you want cached.  The first parameter is your key for this data and is then followed by as many objects as are valid for this block of code.  You can even pass in arrays and they will be expanded.  The only requirement for the objects being passed in is that they respond to an 'id' method.  If the last parameter is a Hash, this will be used as per cache options.  These options can be used for expiry of cache. 
 
