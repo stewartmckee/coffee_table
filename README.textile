@@ -40,15 +40,15 @@ h4. fetch(initial_key, *related_objects, &block)
 
 This is the main caching method.  Pass into this method as a block the chunck of code you want cached.  The first parameter is your key for this data and is then followed by as many objects as are valid for this block of code.  You can even pass in arrays and they will be expanded.  The only requirement for the objects being passed in is that they respond to an 'id' method.  If the last parameter is a Hash, this will be used as per cache options.  These options can be used for expiry of cache. 
 
-bc. user_details = @coffee_table.get_cache(:user_detail, @user, :expiry => 600) do
+bc. user_details = @coffee_table.fetch(:user_detail, @user, :expiry => 600) do
   @user.get_expensive_user_details
 end
 
-Each time this is ran, a unique cache key is generated, assuming the @user.id is '1' the cache key would be "user_detail_user[1]".  The more objects the longer the key.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
+Each time this is ran when a cache item doesn't exist, a unique cache key is generated based on the data passed in, and the code block being executed.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
 
 If you wish to specify a whole model type, for example, all users from above, you would pass in the class, for example:
 
-bc. user_details = @coffee_table.get_cache(:user_detail, User) do
+bc. user_details = @coffee_table.fetch(:user_detail, User) do
   @user.get_something_that_uses_all_users
 end
 
