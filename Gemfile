@@ -13,4 +13,5 @@ group :test do
   gem "rspec"
   gem "mock_redis"
   gem "spork"
+  gem 'coveralls', require: false
 end
