@@ -1,14 +1,15 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require 'coveralls'
+Coveralls.wear!
+
 require 'digest/md5'
 require 'spork'
 require 'mock_redis'
 require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class')
 require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id')
 
-require 'coveralls'
-Coveralls.wear!
 
 Spork.prefork do
   require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table.rb')
