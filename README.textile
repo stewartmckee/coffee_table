@@ -1,6 +1,7 @@
 
 h1. CoffeeTable v0.1.1
 
+!https://badge.fury.io/rb/coffee_table.png!:http://badge.fury.io/rb/coffee_table
 !https://gemnasium.com/stewartmckee/coffee_table.png!
 !https://coveralls.io/repos/stewartmckee/coffee_table/badge.png?branch=master(Coverage Status)!:https://coveralls.io/r/stewartmckee/coffee_table
 
