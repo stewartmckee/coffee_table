@@ -3,12 +3,9 @@ require "coffee_table/utility"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
-<<<<<<< HEAD
 require 'sourcify'
-=======
 require "sourcify"
 require 'digest/md5'
->>>>>>> 18f4d8dc699c8657bad4dbb3fdfc8ca7dcad913c
 
 module CoffeeTable
   class Cache
