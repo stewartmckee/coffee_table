@@ -1,15 +1,22 @@
 require "coffee_table/version"
-require "utility"
+require "coffee_table/utility"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
+<<<<<<< HEAD
 require 'sourcify'
+=======
+require "sourcify"
+require 'digest/md5'
+>>>>>>> 18f4d8dc699c8657bad4dbb3fdfc8ca7dcad913c
 
 module CoffeeTable
   class Cache
 
     include CoffeeTable::Utility
 
+
+    # initialize for coffee_table.  takes options to setup behaviour of cache
     def initialize(options={})
       @options = options
 
@@ -17,14 +24,15 @@ module CoffeeTable
       default_redis_namespace_to :coffee_table
       default_redis_server_to "127.0.0.1"
       default_redis_port_to 6789
+      default_ignore_code_changes_to false
 
-      setup_redis
+      @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
       @scheduler = Rufus::Scheduler.start_new
       
     end
 
-    def get_cache(initial_key, *related_objects, &block)
       
+    def fetch(initial_key, *related_objects, &block)
       raise CoffeeTable::BlockMissingError, "No block given to generate cache from" unless block_given?
 
       # extract the options hash if it is present
@@ -37,12 +45,14 @@ module CoffeeTable
       # check objects are valid
       related_objects.flatten.map{|o| raise CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
 
-      # if first related_object is integer or fixnum it is used as an expiry time for the cache object
-      if related_objects.empty?
-        key = "#{initial_key}"
+      if @options[:ignore_code_changes]
+        block_key = ""
       else
-        key = "#{initial_key}|#{related_objects.flatten.map{|o| key_for_object(o)}.join("|")}"
+        block_key = Digest::MD5.hexdigest(block.to_source)
       end
+
+      # if first related_object is integer or fixnum it is used as an expiry time for the cache object
+      key = Key.new(initial_key, block_key, related_objects)
       
       if @options[:enable_cache]
         if options.has_key?(:expiry)
@@ -51,9 +61,9 @@ module CoffeeTable
           expiry = nil
         end
         
-        @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key
-        if @redis.exists(key)
-          result = marshal_value(@redis.get(key))
+        @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key.to_s
+        if @redis.exists(key.to_s)
+          result = marshal_value(@redis.get(key.to_s))
         else
           result = yield
           # if its a relation, call all to get an array to cache the result
@@ -61,11 +71,11 @@ module CoffeeTable
           #  @logger.debug "Expanding ActiveRecord::Relation..."
           #  result = result.all
           #end
-          @redis.set key, Marshal.dump(result)
+          @redis.set key.to_s, Marshal.dump(result)
           unless expiry.nil?
-            @redis.expire key, expiry
+            @redis.expire key.to_s, expiry
             @scheduler.in "#{expiry}s" do
-              @redis.srem "cache_keys", key
+              @redis.srem "cache_keys", key.to_s
             end
           end
         end
@@ -75,9 +85,11 @@ module CoffeeTable
       result
     end
   
-    def expire_key(key)
-      @redis.del(key)
-      @redis.srem "cache_keys", key
+    def expire_key(key_value)
+      keys.map{|k| Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
+        @redis.del(key.to_s)
+        @redis.srem "cache_keys", key.to_s
+      end
     end
   
     def expire_all
@@ -85,7 +97,7 @@ module CoffeeTable
     end
   
     def keys
-      @redis.smembers "cache_keys"
+      @redis.smembers("cache_keys")
     end  
   
     def expire_for(*objects)
@@ -100,28 +112,27 @@ module CoffeeTable
       if perform_caching
         deleted_keys = []
         unless objects.count == 0
-          keys.each do |key|
+          keys.map{|k| Key.parse(k)}.each do |key|
             expire = true
             objects.each do |object|
-              mod_key = "|#{key}|"
               if object.class == String || object.class == Symbol
-                unless mod_key.include?("|#{object}|")
+                unless key.has_element?(object)
                   expire = false
                 end
               elsif object.class == Class
                 object_type = underscore(object.to_s)
-                unless mod_key.include?("|#{object_type}[") or mod_key.include?("|#{ActiveSupport::Inflector.pluralize(object_type)}|")
+                unless key.has_element_type?(object_type) || key.has_element_type?(ActiveSupport::Inflector.pluralize(object_type))
                   expire = false
                 end
               else
                 object_type = underscore(object.class.to_s)
-                unless mod_key.include?("|#{object_type.to_sym}[#{object.id}]|") or mod_key.include?("|#{object_type}|")
+                unless key.has_element?("#{object_type.to_sym}[#{object.id}]") or key.has_element?(object_type)
                   expire = false
                 end
               end 
             end
             if expire
-              expire_key(key)
+              expire_key(key.to_s)
               deleted_keys << key
             end
           end
@@ -129,6 +140,8 @@ module CoffeeTable
         deleted_keys
       end
     end
+
+    alias :get_cache :fetch
   
     private
     def marshal_value(value)
@@ -140,9 +153,6 @@ module CoffeeTable
         result = marshal_value(value)
       end
       result
-    end
-    def setup_redis
-      @redis = Redis.new #::Namespace.new(options[:redis_namespace], :redis => Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]}))
     end
     def object_valid?(o)
       o.respond_to?(:id) || o.class == Class

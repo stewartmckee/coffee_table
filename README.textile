@@ -1,14 +1,25 @@
 
-h1. CoffeeTable v0.0.3
+h1. CoffeeTable v0.1.1
 
-!https://secure.travis-ci.org/stewartmckee/coffee_table.png?branch=master!
+!https://badge.fury.io/rb/coffee_table.png!:http://badge.fury.io/rb/coffee_table
 !https://gemnasium.com/stewartmckee/coffee_table.png!
+!https://coveralls.io/repos/stewartmckee/coffee_table/badge.png?branch=master(Coverage Status)!:https://coveralls.io/r/stewartmckee/coffee_table
 
 h2. Intro 
   
-  CoffeeTable was born out of a frustration with the standard caching methods around.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable maintains a list of its keys in a known format and when expiry is required for an object it knows which ones to expire
+  CoffeeTable is a smart fragment caching gem that was born out of a frustration with the standard caching methods.  Maintaining the cache keys constantly was a headache and 'bet its a caching issue' was a phrase uttered way too much.  CoffeeTable was designed to take on the role of maintaining the cache keys for you, allowing you to concentrate on what is in the cache.  It works by maintaining a list of its keys in a known format and when expiry is required for an object it knows which ones to expire.  It also hopefully will be a perfromance boost for some cases where you are being overly cautious about clearing cache, a more targeted approach will improve performance.
     
 h3. Installation
+
+h4. Using Rails/Bundler
+
+Put the following in your Gemfile and run 'bundle'
+
+bc. gem 'coffee_table'
+
+h4. Straight Ruby
+
+Run the following at the command prompt
 
 bc. gem install coffee_table
 
@@ -18,55 +29,48 @@ h3. CoffeeTable::Cache
 
 h4. new(options)
 
-Creates a new cache object.  You can pass various options into this method to set configuration options for the cache.
+Creates a new cache object.  You can pass options into this method to modify the cache behaviour.
 
-  * :enable_cache  This defaults to true, but can be set to false to disable the cache
-  * :redis_namespace defaults to ":coffee_table" and is set to seperate out the keys from other redis users
+  * :enable_cache This defaults to true, but can be set to false to disable the cache
+  * :redis_namespace defaults to ":coffee_table" and is set to seperate out the keys from other redis users or other caches
   * :redis_server defaults to "127.0.0.1"
   * :redis_port defaults to 6789
+  * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
   
 
-h4. get_cache(initial_key, *related_objects, &block)
+h4. fetch(initial_key, *related_objects, &block)
 
 This is the main caching method.  Pass into this method as a block the chunck of code you want cached.  The first parameter is your key for this data and is then followed by as many objects as are valid for this block of code.  You can even pass in arrays and they will be expanded.  The only requirement for the objects being passed in is that they respond to an 'id' method.  If the last parameter is a Hash, this will be used as per cache options.  These options can be used for expiry of cache. 
 
-bc. user_details = @coffee_table.get_cache(:user_detail, @user, :expiry => 600) do
+bc. user_details = @coffee_table.fetch(:user_detail, @user, :expiry => 600) do
   @user.get_expensive_user_details
 end
 
-Each time this is ran, a unique cache key is generated, assuming the @user.id is '1' the cache key would be "user_detail_user[1]".  The more objects the longer the key.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
+Each time this is ran when a cache item doesn't exist, a unique cache key is generated based on the data passed in, and the code block being executed.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
 
 If you wish to specify a whole model type, for example, all users from above, you would pass in the class, for example:
 
-bc. user_details = @coffee_table.get_cache(:user_detail, User) do
+bc. user_details = @coffee_table.fetch(:user_detail, User) do
   @user.get_something_that_uses_all_users
 end
 
-In this case the key will be "user_detail_users", for which you can expire_for(User) which will clear regardless of the specific object id.
+This would be expired with 'expire_for(User)' which will clear all user cache items regardless of the specific object id.
 
 The only required field is the first parameter, so you can create keys and cache as you normally would, ignoring the objects.
 
-h4. expire_key(key)
-
-This method directly expires a known key.
-
-bc. @coffee_table.expire_key("user_detail_user[1]")
-
-The above code would expire the above example of cache.
-
 h4. expire_all
 
-This method clears the whole cache.
+This method clears the whole cache removing all cache items.
 
 bc. @coffee_table.expire_all
 
 h4. keys
 
-This is a helper method to return the list of keys currently in the system.  This list is maintained when cache is created and expired.
+This is a helper method to return the list of keys currently in the system.  This list is maintained when cache is created and expired.  Can also be used for debug purposes when investigating an issue.
 
 h4. expire_for(*objects)
 
-This is the main expire method.  In order to expire a cache, you only need to pass in any objects that would be invalidated.  With the above example this would be as follows.
+This is the main expire method.  In order to expire a cache item, you pass in any objects that would be invalidated.  With the above example this would be as follows.
 
 bc. @coffee_table.expire_for(@user)
 
@@ -77,3 +81,7 @@ You can also expire for a whole class type
 bc. @coffee_table.expire_for(User)
 
 this would expire all keys that reference the user objects.
+
+The best practice for this is to be as specific as you can when creating the key.  Also creating more targeted cache items may be better in some situations than having one large cache fragment.
+
+
