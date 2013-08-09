@@ -3,10 +3,7 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in coffee_table.gemspec
 gemspec
 
-gem "redis"
 gem "awesome_print"
-gem "rufus-scheduler"
-gem "activesupport"
 
 group :test do
   gem "rspec"

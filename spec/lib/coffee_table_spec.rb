@@ -18,13 +18,13 @@ describe CoffeeTable do
       CoffeeTable::Cache.new({:test => "asdf"})
     end
     it "should not raise exception when hash not given" do
-      lambda{CoffeeTable::Cache.new}.should_not raise_exception CoffeeTableBlockMissingError
+      lambda{CoffeeTable::Cache.new}.should_not raise_exception CoffeeTable::BlockMissingError
     end
   end
   
   describe "get_cache" do
     it "should raise an exception when block not given" do
-      lambda{@coffee_table.get_cache("asdf")}.should raise_exception CoffeeTableBlockMissingError
+      lambda{@coffee_table.get_cache("asdf")}.should raise_exception CoffeeTable::BlockMissingError
     end
     it "should execute block when cache value not available" do
       result = @coffee_table.get_cache("asdf") do
@@ -107,7 +107,7 @@ describe CoffeeTable do
           result = @coffee_table.get_cache(:test_key, test_object) do
             "this is a changed value"
           end
-        }.should raise_exception CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class"
+        }.should raise_exception CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class"
         
       end
 
@@ -149,6 +149,29 @@ describe CoffeeTable do
           "this is a changed value"
         end      
         result.should == "this is a changed value"      
+      end
+    end
+
+    context "changing block" do
+      it "should not change key with same code" do
+        object = "object1"
+        @coffee_table.get_cache(:test_key) do
+          object
+        end
+        object = "object2"
+        result = @coffee_table.get_cache(:test_key) do
+          object
+        end
+        result.should == "object1"
+      end
+      it "should change key with changed code" do
+        @coffee_table.get_cache(:test_key) do
+          "object1"
+        end
+        result = @coffee_table.get_cache(:test_key) do
+          "object2"
+        end
+        result.should == "object2"
       end
     end
   end
