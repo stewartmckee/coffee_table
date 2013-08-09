@@ -3,6 +3,7 @@ require "utility"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
+require 'sourcify'
 
 module CoffeeTable
   class Cache
@@ -23,8 +24,8 @@ module CoffeeTable
     end
 
     def get_cache(initial_key, *related_objects, &block)
-
-      raise CoffeeTableBlockMissingError, "No block given to generate cache from" unless block_given?
+      
+      raise CoffeeTable::BlockMissingError, "No block given to generate cache from" unless block_given?
 
       # extract the options hash if it is present
       options = {}
@@ -34,7 +35,7 @@ module CoffeeTable
       end
 
       # check objects are valid
-      related_objects.flatten.map{|o| raise CoffeeTableInvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
+      related_objects.flatten.map{|o| raise CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       if related_objects.empty?
@@ -149,6 +150,8 @@ module CoffeeTable
     def key_for_object(o)
       if o.class == Class
         "#{ActiveSupport::Inflector.pluralize(underscore(o.to_s))}"
+      elsif o.class == CoffeeTable::ObjectDefinition
+        o.to_s
       else
         "#{underscore(o.class.to_s)}[#{o.id}]"
       end

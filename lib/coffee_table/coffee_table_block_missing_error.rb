@@ -1,3 +1,0 @@
-class CoffeeTableBlockMissingError < StandardError
-  
-end
