@@ -34,8 +34,6 @@ Spork.each_run do
   end  
 end
 
-
-
 def load_sample(filename)
   File.open(File.dirname(__FILE__) + "/samples/" + filename).map { |line| line}.join("\n")  
 end

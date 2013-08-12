@@ -22,6 +22,8 @@ module CoffeeTable
       default_redis_server_to "127.0.0.1"
       default_redis_port_to 6789
       default_ignore_code_changes_to false
+      default_compress_content_to true
+      default_compress_min_size_to 10240
 
       @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
       @scheduler = Rufus::Scheduler.start_new
@@ -48,8 +50,14 @@ module CoffeeTable
         block_key = Digest::MD5.hexdigest(block.to_source)
       end
 
+      flags = {}
+
+      compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
+      flags[:compressed] = true if compress_result
+
+
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
-      key = Key.new(initial_key, block_key, related_objects)
+      key = CoffeeTable::Key.new(initial_key, block_key, flags, related_objects)
       
       if @options[:enable_cache]
         if options.has_key?(:expiry)
@@ -63,11 +71,11 @@ module CoffeeTable
           result = marshal_value(@redis.get(key.to_s))
         else
           result = yield
-          # if its a relation, call all to get an array to cache the result
-          #if result.class == ActiveRecord::Relation
-          #  @logger.debug "Expanding ActiveRecord::Relation..."
-          #  result = result.all
-          #end
+          
+          if compress_result
+            result = result.gzip
+          end
+
           @redis.set key.to_s, Marshal.dump(result)
           unless expiry.nil?
             @redis.expire key.to_s, expiry
@@ -83,7 +91,7 @@ module CoffeeTable
     end
   
     def expire_key(key_value)
-      keys.map{|k| Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
+      keys.map{|k| CoffeeTable::Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
         @redis.del(key.to_s)
         @redis.srem "cache_keys", key.to_s
       end
@@ -109,7 +117,7 @@ module CoffeeTable
       if perform_caching
         deleted_keys = []
         unless objects.count == 0
-          keys.map{|k| Key.parse(k)}.each do |key|
+          keys.map{|k| CoffeeTable::Key.parse(k)}.each do |key|
             expire = true
             objects.each do |object|
               if object.class == String || object.class == Symbol
@@ -153,15 +161,6 @@ module CoffeeTable
     end
     def object_valid?(o)
       o.respond_to?(:id) || o.class == Class
-    end
-    def key_for_object(o)
-      if o.class == Class
-        "#{ActiveSupport::Inflector.pluralize(underscore(o.to_s))}"
-      elsif o.class == CoffeeTable::ObjectDefinition
-        o.to_s
-      else
-        "#{underscore(o.class.to_s)}[#{o.id}]"
-      end
     end
   end
 end

@@ -5,15 +5,16 @@ module CoffeeTable
     include CoffeeTable::Utility
 
     def self.parse(string)
-      elements = string.split("|").map{|e| decode_element(e) }
-      key = Key.new(elements[0], elements[1])
-      key.elements =  elements[2..-1]
+      elements = string.split("|", -1).map{|e| decode_element(e) }
+      key = Key.new(elements[0], elements[1], Hash[elements.last.split("&").map{|kv| [kv.split("=")[0].to_sym, kv.split("=")[1]]}])
+      key.elements =  elements[2..-2]
       key
     end
 
-    def initialize(name, block_key, *objects)
+    def initialize(name, block_key, options, *objects)
       @name = name
       @block_key = block_key
+      @options = options
       @elements = objects.flatten.map{|o| key_for_object(o)}
     end
 
@@ -33,6 +34,10 @@ module CoffeeTable
       @block_key
     end
 
+    def options
+      @options
+    end
+
     def elements
       @elements
     end
@@ -46,7 +51,7 @@ module CoffeeTable
     end
 
     def to_s
-      [encode_element(@name), encode_element(@block_key), @elements.map{|e| encode_element(e) }].flatten.join("|")
+      [encode_element(@name), encode_element(@block_key), @elements.map{|e| encode_element(e) }, encode_element(@options.map{|k,v| "#{k}=#{v}"}.join("&"))].flatten.join("|")
     end
 
     private
@@ -72,6 +77,8 @@ module CoffeeTable
         "#{ActiveSupport::Inflector.pluralize(underscore(o.to_s))}"
       elsif o.kind_of?(String) || o.kind_of?(Symbol)
         "#{underscore(o.to_s)}"
+      elsif o.class == CoffeeTable::ObjectDefinition
+        o.to_s
       else
         "#{underscore(o.class.to_s)}[#{o.id}]"
       end
