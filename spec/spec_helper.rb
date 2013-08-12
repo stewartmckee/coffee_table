@@ -23,8 +23,8 @@ Spork.each_run do
     config.before(:each) {
       
       
-      redis = mock(:redis)
-      Redis.stub!(:new).and_return(MockRedis.new)
+      redis = double(:redis)
+      Redis.stub(:new).and_return(MockRedis.new)
       CoffeeTable::Cache.new.expire_all
       
     }
@@ -33,8 +33,6 @@ Spork.each_run do
     }
   end  
 end
-
-
 
 def load_sample(filename)
   File.open(File.dirname(__FILE__) + "/samples/" + filename).map { |line| line}.join("\n")  
