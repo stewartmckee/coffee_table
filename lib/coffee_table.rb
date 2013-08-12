@@ -1,14 +1,14 @@
 require "coffee_table/version"
 require "coffee_table/utility"
+require "coffee_table/key"
+require "coffee_table/invalid_object_error"
+require "coffee_table/block_missing_error"
+require "coffee_table/object_definition"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
-<<<<<<< HEAD
 require 'sourcify'
-=======
-require "sourcify"
 require 'digest/md5'
->>>>>>> 18f4d8dc699c8657bad4dbb3fdfc8ca7dcad913c
 
 module CoffeeTable
   class Cache
@@ -23,7 +23,7 @@ module CoffeeTable
       default_enable_cache_to true
       default_redis_namespace_to :coffee_table
       default_redis_server_to "127.0.0.1"
-      default_redis_port_to 6789
+      default_redis_port_to 6379
       default_ignore_code_changes_to false
 
       @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
@@ -52,7 +52,7 @@ module CoffeeTable
       end
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
-      key = Key.new(initial_key, block_key, related_objects)
+      key = CoffeeTable::Key.new(initial_key, block_key, related_objects)
       
       if @options[:enable_cache]
         if options.has_key?(:expiry)
@@ -86,7 +86,7 @@ module CoffeeTable
     end
   
     def expire_key(key_value)
-      keys.map{|k| Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
+      keys.map{|k| CoffeeTable::Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
         @redis.del(key.to_s)
         @redis.srem "cache_keys", key.to_s
       end
@@ -112,7 +112,7 @@ module CoffeeTable
       if perform_caching
         deleted_keys = []
         unless objects.count == 0
-          keys.map{|k| Key.parse(k)}.each do |key|
+          keys.map{|k| CoffeeTable::Key.parse(k)}.each do |key|
             expire = true
             objects.each do |object|
               if object.class == String || object.class == Symbol

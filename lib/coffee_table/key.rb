@@ -6,7 +6,7 @@ module CoffeeTable
 
     def self.parse(string)
       elements = string.split("|").map{|e| decode_element(e) }
-      key = Key.new(elements[0], elements[1])
+      key = CoffeeTable::Key.new(elements[0], elements[1])
       key.elements =  elements[2..-1]
       key
     end

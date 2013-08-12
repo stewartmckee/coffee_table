@@ -11,7 +11,7 @@ module CoffeeTable
     end
 
     def to_s
-      "#{klass.to_s)}[#{@id.to_s}]"
+      "#{klass.to_s}[#{@id.to_s}]"
     end
 
   end
