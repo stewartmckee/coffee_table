@@ -69,6 +69,12 @@ describe CoffeeTable::Key do
 
   context "storing options" do
 
+    before(:each) do
+      @obj1 = CoffeeTable::ObjectDefinition.new(:test, 1)
+      @obj2 = CoffeeTable::ObjectDefinition.new(:test, 2)
+      @obj3 = CoffeeTable::ObjectDefinition.new(:test, 3)
+    end
+
     it "should encode options into key" do
       key = CoffeeTable::Key.new("name", "key", {:option => "value", :option2 => "value2"})
       key.to_s.should eql "name|key|option=value&amp;option2=value2"
@@ -92,6 +98,19 @@ describe CoffeeTable::Key do
       key.to_s.should eql "name|key|option=value&amp;option2=value2"
     end
 
+    it "matches regardless of flags" do
+      key = CoffeeTable::Key.new("name", "key", {:option => "value", :option2 => "value2"}, @obj1, @obj2, @obj3)
+      key.has_element?("test[1]").should be_true
+      key.has_element?("test[2]").should be_true
+      key.has_element?("test[3]").should be_true
+      key.has_element?("test[4]").should be_false
+    end
+
+    it "does not match on flag values" do
+      key = CoffeeTable::Key.new("name", "key", {:option => "value", :option2 => "value2"}, @obj1, @obj2, @obj3)
+      key.has_element?("option=value&amp;option2=value2").should be_false
+      
+    end
 
   end
 end
