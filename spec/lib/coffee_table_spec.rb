@@ -55,7 +55,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}"]
+        @coffee_table.keys.should == ["test_key|#{md5}|"]
       end
 
       it "should create key from class" do
@@ -65,7 +65,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_classes"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_classes|"]
       end
       
       it "should use class name for keys" do
@@ -75,7 +75,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]|"]
       end
 
       it "should use id from class in key" do
@@ -85,7 +85,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]"]
+        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]|"]
       end
 
     end
@@ -101,7 +101,7 @@ describe CoffeeTable::Cache do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key|#{md5}|sample_class[9938]"
+        @coffee_table.keys.should include "test_key|#{md5}|sample_class[9938]|"
         
       end
       it "should raise an exception if a related object does not respond_to id" do
@@ -124,7 +124,7 @@ describe CoffeeTable::Cache do
           "this is a changed value"
         end
         
-        @coffee_table.keys.should include "test_key|#{md5}|sample_classes"          
+        @coffee_table.keys.should include "test_key|#{md5}|sample_classes|"          
       end
 
     end
@@ -210,9 +210,9 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
       @coffee_table.expire_key("second_key")
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "third_key|#{@proc_md53}"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "third_key|#{@proc_md53}|"].sort
 
     end
     it "should not expire anything if no matches" do
@@ -236,9 +236,9 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
       @coffee_table.expire_key("fourth_key")
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}", "second_key|#{@proc_md52}", "third_key|#{@proc_md53}"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
 
     end
 
@@ -376,9 +376,9 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}",
-                               "second_key|#{@proc_md52}",
-                               "third_key|#{@proc_md53}"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|",
+                               "second_key|#{@proc_md52}|",
+                               "third_key|#{@proc_md53}|"].sort
 
     end
     it "should return key created with objects and ids" do
@@ -391,9 +391,9 @@ describe CoffeeTable::Cache do
       @coffee_table.fetch(:third_key, @object3) do
         "object3"
       end
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]",
-                               "second_key|#{@proc_md52}|sample_class[4]|sample_class[2]|sample_class[5]",
-                               "third_key|#{@proc_md53}|sample_class[7]|sample_class[2]|sample_class[8]"].sort
+      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]|",
+                               "second_key|#{@proc_md52}|sample_class[4]|sample_class[2]|sample_class[5]|",
+                               "third_key|#{@proc_md53}|sample_class[7]|sample_class[2]|sample_class[8]|"].sort
     end
 
   end

@@ -1,5 +1,6 @@
 require "coffee_table/version"
 require "coffee_table/utility"
+require "coffee_table/object_definition"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
@@ -52,8 +53,9 @@ module CoffeeTable
 
       flags = {}
 
-      compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
-      flags[:compressed] = true if compress_result
+
+      # compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
+      # flags[:compressed] = true if compress_result
 
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
@@ -72,9 +74,9 @@ module CoffeeTable
         else
           result = yield
           
-          if compress_result
-            result = result.gzip
-          end
+          # if compress_result
+          #   result = result.gzip
+          # end
 
           @redis.set key.to_s, Marshal.dump(result)
           unless expiry.nil?
