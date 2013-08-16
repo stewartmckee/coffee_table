@@ -1,11 +1,13 @@
 require "coffee_table/version"
 require "coffee_table/utility"
+require "coffee_table/key"
+require "coffee_table/invalid_object_error"
+require "coffee_table/block_missing_error"
 require "coffee_table/object_definition"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
 require 'sourcify'
-require "sourcify"
 require 'digest/md5'
 
 module CoffeeTable
@@ -21,7 +23,7 @@ module CoffeeTable
       default_enable_cache_to true
       default_redis_namespace_to :coffee_table
       default_redis_server_to "127.0.0.1"
-      default_redis_port_to 6789
+      default_redis_port_to 6379
       default_ignore_code_changes_to false
       default_compress_content_to true
       default_compress_min_size_to 10240
