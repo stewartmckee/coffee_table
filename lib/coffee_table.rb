@@ -9,6 +9,7 @@ require 'rufus/scheduler'
 require 'active_support/inflector'
 require 'sourcify'
 require 'digest/md5'
+require 'gzip'
 
 module CoffeeTable
   class Cache
@@ -27,7 +28,6 @@ module CoffeeTable
       default_ignore_code_changes_to false
       default_compress_content_to true
       default_compress_min_size_to 10240
-
       @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
       @scheduler = Rufus::Scheduler.start_new
       
@@ -56,9 +56,6 @@ module CoffeeTable
       flags = {}
 
 
-      # compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
-      # flags[:compressed] = true if compress_result
-
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       key = CoffeeTable::Key.new(initial_key, block_key, flags, related_objects)
@@ -72,15 +69,23 @@ module CoffeeTable
         
         @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key.to_s
         if @redis.exists(key.to_s)
-          result = marshal_value(@redis.get(key.to_s))
+          if key.options[:compressed]
+            result = marshal_value(@redis.get(key.to_s).gunzip)
+          else
+            result = marshal_value(@redis.get(key.to_s))
+          end
         else
           result = yield
-          
-          # if compress_result
-          #   result = result.gzip
-          # end
 
-          @redis.set key.to_s, Marshal.dump(result)
+          compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
+
+          if compress_result
+            key.add_flag(:compressed => true)
+            @redis.set key.to_s, Marshal.dump(result.gzip)
+          else
+            @redis.set key.to_s, Marshal.dump(result)
+          end
+
           unless expiry.nil?
             @redis.expire key.to_s, expiry
             @scheduler.in "#{expiry}s" do

@@ -38,6 +38,10 @@ module CoffeeTable
       @options
     end
 
+    def add_flag(options)
+      @options.merge!(options)
+    end
+
     def elements
       @elements
     end

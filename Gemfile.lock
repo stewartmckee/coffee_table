@@ -76,6 +76,7 @@ DEPENDENCIES
   awesome_print
   coffee_table!
   coveralls
+  gzip
   mock_redis
   rspec
   rufus-scheduler

@@ -18,7 +18,7 @@ describe CoffeeTable::Cache do
       CoffeeTable::Cache.new({:test => "asdf"})
     end
     it "should not raise exception when hash not given" do
-      lambda{CoffeeTable::Cache.new}.should_not raise_exception CoffeeTable::BlockMissingError
+      lambda{CoffeeTable::Cache.new}.should_not raise_exception
     end
   end
   
@@ -45,6 +45,73 @@ describe CoffeeTable::Cache do
         
       result.should == "this is a value"      
       
+    end
+
+    context "compressing" do
+
+      before(:each) do
+        @redis = Redis.new({:server => "127.0.0.1", :port => 6379})
+
+      end
+
+      it "compresses on strings greater than limit" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        zipped_content = "this string should be long".gzip
+        result = @coffee_table.fetch(:test_key) do
+          "this string should be long"
+        end
+        result.should eql "this string should be long"
+        @redis.get("test_key|1bdc7485920d15e21276c0c54cdb5bcf|compressed=true").should eql Marshal.dump(zipped_content)
+      end
+      it "does not compress on non strings" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        result = @coffee_table.fetch(:test_key) do
+          {:test => "this value is a decent length to trigger compress"}
+        end
+        result.should eql ({:test => "this value is a decent length to trigger compress"})
+        @redis.get("test_key|9e6b3fa8a7fd45acb4734946faf5b61c|").should eql "\x04\b{\x06:\ttestI\"6this value is a decent length to trigger compress\x06:\x06EF"
+      end
+
+      it "does not compress when turned off" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_content => false)
+        result = @coffee_table.fetch(:test_key) do
+          "this string should be long"
+        end
+        result.should eql "this string should be long"
+        @redis.get("test_key|1bdc7485920d15e21276c0c54cdb5bcf|").should eql "\x04\bI\"\x1Fthis string should be long\x06:\x06EF"
+      end
+      it "does not compress on strings below limit" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        result = @coffee_table.fetch(:test_key) do
+          "short"
+        end
+        result.should eql "short"
+        @redis.get("test_key|73a95ee5162c38b2ebda1f70a3ab5893|").should eql "\x04\bI\"\nshort\x06:\x06EF"
+      end
+      it "decompresses compressed value" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table.fetch(:test_key) do
+          "this string should be long"
+        end
+        result = @coffee_table.fetch(:test_key) do
+          "this string should be long"
+        end
+        result.class.should eql String
+        result.should eql "this string should be long"
+
+      end
+      it "does not decompress a non compressed value" do
+        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table.fetch(:test_key) do
+          "short"
+        end
+        result = @coffee_table.fetch(:test_key) do
+          "short"
+        end
+        result.should eql "short"
+      end
+
+
     end
 
     context "keys" do
