@@ -36,6 +36,8 @@ Creates a new cache object.  You can pass options into this method to modify the
   * :redis_server defaults to "127.0.0.1"
   * :redis_port defaults to 6789
   * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
+  * :compress_content defaults to true and sets whether large strings are compressed
+  * :compress_min_size defaults to 10240, which is 10k any strings larger than this are compressed before being stored
   
 
 h4. fetch(initial_key, *related_objects, &block)

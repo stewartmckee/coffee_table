@@ -1,4 +1,10 @@
 
+0.1.3
+  - added compression for string content over 10k in size, can be turned off and limit changed
+
+0.1.2
+  - added ObjectDefinition to allow hashes to be used in key (eg for params in the controller)
+
 0.1.1
   - updated documentation
   - refactored get_cache method to fetch
