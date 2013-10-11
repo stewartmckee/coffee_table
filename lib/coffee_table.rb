@@ -31,9 +31,9 @@ module CoffeeTable
       @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
       rufus_version = Gem::Version.new(Rufus::Scheduler::VERSION)
       if rufus_version >= Gem::Version.new('3.0.0')
-        @scheduler = Rufus::Scheduler.start_new
-      else
         @scheduler = Rufus::Scheduler.new
+      else
+        @scheduler = Rufus::Scheduler.start_new
       end
       
     end
