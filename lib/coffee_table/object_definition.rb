@@ -6,6 +6,10 @@ module CoffeeTable
       @id = id
     end
 
+    def id
+      @id
+    end
+
     def self.from_hash(hash)
       hash.map {|k, v| ObjectDefinition.new(k, v)}
     end
