@@ -7,7 +7,6 @@ require "coffee_table/object_definition"
 require "redis"
 require 'rufus/scheduler'
 require 'active_support/inflector'
-require 'sourcify'
 require 'digest/md5'
 require 'gzip'
 
@@ -29,11 +28,11 @@ module CoffeeTable
       default_compress_content_to true
       default_compress_min_size_to 10240
       @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
-      @scheduler = Rufus::Scheduler.start_new
-      
+      @scheduler = Rufus::Scheduler.new
+
     end
 
-      
+
     def fetch(initial_key, *related_objects, &block)
       raise CoffeeTable::BlockMissingError, "No block given to generate cache from" unless block_given?
 
@@ -47,11 +46,11 @@ module CoffeeTable
       # check objects are valid
       related_objects.flatten.map{|o| raise CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
 
-      if @options[:ignore_code_changes]
+      # if @options[:ignore_code_changes]
         block_key = ""
-      else
-        block_key = Digest::MD5.hexdigest(block.to_source)
-      end
+      # else
+      #   block_key = Digest::MD5.hexdigest(block.to_source)
+      # end
 
       flags = {}
 
@@ -59,14 +58,14 @@ module CoffeeTable
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       key = CoffeeTable::Key.new(initial_key, block_key, flags, related_objects)
-      
+
       if @options[:enable_cache]
         if options.has_key?(:expiry)
           expiry = options[:expiry]
         else
           expiry = nil
         end
-        
+
         @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key.to_s
         if @redis.exists(key.to_s)
           if key.options[:compressed]
@@ -98,22 +97,22 @@ module CoffeeTable
       end
       result
     end
-  
+
     def expire_key(key_value)
       keys.map{|k| CoffeeTable::Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
         @redis.del(key.to_s)
         @redis.srem "cache_keys", key.to_s
       end
     end
-  
+
     def expire_all
       keys.map{|key| expire_key(key)}
     end
-  
+
     def keys
       @redis.smembers("cache_keys")
-    end  
-  
+    end
+
     def expire_for(*objects)
       if defined? Rails
         perform_caching = Rails.application.configure do
@@ -122,7 +121,7 @@ module CoffeeTable
       else
         perform_caching = true
       end
-    
+
       if perform_caching
         deleted_keys = []
         unless objects.count == 0
@@ -143,7 +142,7 @@ module CoffeeTable
                 unless key.has_element?("#{object_type.to_sym}[#{object.id}]") or key.has_element?(object_type)
                   expire = false
                 end
-              end 
+              end
             end
             if expire
               expire_key(key.to_s)
@@ -156,7 +155,7 @@ module CoffeeTable
     end
 
     alias :get_cache :fetch
-  
+
     private
     def marshal_value(value)
       begin
