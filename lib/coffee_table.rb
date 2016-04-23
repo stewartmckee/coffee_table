@@ -27,7 +27,12 @@ module CoffeeTable
       default_ignore_code_changes_to false
       default_compress_content_to true
       default_compress_min_size_to 10240
-      @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
+
+      if @options.has_key?(:redis_url)
+        @redis = Redis.new({:url => @options[:redis_url]})
+      else
+        @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
+      end
       rufus_version = Gem::Version.new(Rufus::Scheduler::VERSION)
       if rufus_version >= Gem::Version.new('3.0.0')
         @scheduler = Rufus::Scheduler.new
