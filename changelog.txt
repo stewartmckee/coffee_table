@@ -1,3 +1,6 @@
+0.2.3
+  - closing redis connections on use
+  
 0.2.2
   - added max_threads option due to limited thread environment in heroku
 

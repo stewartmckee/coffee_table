@@ -29,11 +29,6 @@ module CoffeeTable
       default_compress_min_size_to 10240
       default_max_threads_to 28
 
-      if @options.has_key?(:redis_url)
-        @redis = Redis.new({:url => @options[:redis_url]})
-      else
-        @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
-      end
       rufus_version = Gem::Version.new(Rufus::Scheduler::VERSION)
       if rufus_version >= Gem::Version.new('3.0.0')
         @scheduler = Rufus::Scheduler.new(:max_work_threads => @options[:max_threads])
@@ -42,9 +37,10 @@ module CoffeeTable
       end
     end
 
-
     def fetch(initial_key, *related_objects, &block)
       raise CoffeeTable::BlockMissingError, "No block given to generate cache from" unless block_given?
+
+      @redis = get_redis
 
       # extract the options hash if it is present
       options = {}
@@ -105,14 +101,18 @@ module CoffeeTable
       else
         result = yield
       end
+
+      @redis.close
       result
     end
 
     def expire_key(key_value)
+      @redis = get_redis
       keys.map{|k| CoffeeTable::Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
         @redis.del(key.to_s)
         @redis.srem "cache_keys", key.to_s
       end
+      @redis.close
     end
 
     def expire_all
@@ -120,7 +120,10 @@ module CoffeeTable
     end
 
     def keys
-      @redis.smembers("cache_keys")
+      @redis = get_redis
+      members = @redis.smembers("cache_keys")
+      @redis.close
+      memberss
     end
 
     def expire_for(*objects)
@@ -179,6 +182,13 @@ module CoffeeTable
     end
     def object_valid?(o)
       o.respond_to?(:id) || o.class == Class
+    end
+    def get_redis
+      if @options.has_key?(:redis_url)
+        return Redis.new({:url => @options[:redis_url]})
+      else
+        return Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
+      end
     end
   end
 end
