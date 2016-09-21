@@ -1,3 +1,6 @@
+0.2.6
+  - fixed bug in creating coffee table object
+
 0.2.5
   - removed proc_extensions
 

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    coffee_table (0.2.4)
+    coffee_table (0.2.6)
       activesupport
       gzip
       redis
