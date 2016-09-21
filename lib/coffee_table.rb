@@ -62,6 +62,9 @@ module CoffeeTable
         block_key = ""
       else
         block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "")
+        puts "------------------------------------------------------------"
+        puts block_source
+        puts "------------------------------------------------------------"
         block_key = Digest::MD5.hexdigest(block_source)
       end
 
