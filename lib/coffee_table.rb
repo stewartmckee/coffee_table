@@ -14,9 +14,7 @@ require "proc_extensions"
 module CoffeeTable
   class Cache
 
-
     include CoffeeTable::Utility
-
 
     # initialize for coffee_table.  takes options to setup behaviour of cache
     def initialize(options={})
@@ -26,12 +24,15 @@ module CoffeeTable
       default_redis_namespace_to :coffee_table
       default_redis_server_to "127.0.0.1"
       default_redis_port_to 6379
+      default_redis_to nil
       default_ignore_code_changes_to false
       default_compress_content_to true
       default_compress_min_size_to 10240
       default_max_threads_to 5
 
-      if @options.has_key?(:redis_url)
+      if !@options[:redis].nil?
+        @redis = @options[:redis]
+      elsif @options.has_key?(:redis_url)
         @redis = Redis.new({:url => @options[:redis_url]})
       else
         @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})

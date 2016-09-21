@@ -1,6 +1,9 @@
+0.2.4
+  - reversed closing connections and instead added :redis option to pass in an existing connection
+
 0.2.3
   - closing redis connections on use
-  
+
 0.2.2
   - added max_threads option due to limited thread environment in heroku
 

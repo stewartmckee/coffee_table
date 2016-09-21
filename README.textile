@@ -33,6 +33,7 @@ Creates a new cache object.  You can pass options into this method to modify the
 
   * :enable_cache This defaults to true, but can be set to false to disable the cache
   * :redis_namespace defaults to ":coffee_table" and is set to seperate out the keys from other redis users or other caches
+  * :redis defaults to nil and can be used to pass in a redis connection, this overrides all other redis params
   * :redis_server defaults to "127.0.0.1"
   * :redis_port defaults to 6789
   * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
