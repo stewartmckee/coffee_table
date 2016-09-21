@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    coffee_table (0.2.3)
+    coffee_table (0.2.4)
       activesupport
       gzip
       redis
@@ -30,8 +30,6 @@ GEM
     mime-types (1.23)
     mock_redis (0.17.0)
     multi_json (1.7.8)
-    proc_extensions (0.2)
-      sourcify (~> 0.5)
     redis (3.2.2)
     rest-client (1.6.7)
       mime-types (>= 1.16)
@@ -75,7 +73,6 @@ DEPENDENCIES
   coveralls
   gzip
   mock_redis
-  proc_extensions
   rspec
   rufus-scheduler
   spork

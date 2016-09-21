@@ -7,7 +7,6 @@ gem "awesome_print"
 gem "rufus-scheduler"
 gem "activesupport"
 gem "gzip"
-gem "proc_extensions"
 
 group :test do
   gem "rspec"

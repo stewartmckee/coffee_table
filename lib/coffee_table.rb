@@ -9,7 +9,6 @@ require 'rufus/scheduler'
 require 'active_support/inflector'
 require 'digest/md5'
 require 'gzip'
-require "proc_extensions"
 
 module CoffeeTable
   class Cache

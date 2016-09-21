@@ -1,3 +1,6 @@
+0.2.5
+  - removed proc_extensions
+
 0.2.4
   - reversed closing connections and instead added :redis option to pass in an existing connection
 
