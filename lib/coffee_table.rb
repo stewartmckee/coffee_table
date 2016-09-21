@@ -98,6 +98,8 @@ module CoffeeTable
             @redis.set key.to_s, Marshal.dump(result)
           end
 
+          puts key.to_s
+
           unless expiry.nil?
             @redis.expire key.to_s, expiry
             @scheduler.in "#{expiry}s" do
