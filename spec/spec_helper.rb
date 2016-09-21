@@ -42,6 +42,6 @@ def load_binary_sample(filename)
 end
 
 def md5_block(&block)
-  block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "")
+  block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "").gsub(/^== disasm.*?$/, "")
   Digest::MD5.hexdigest(block_source)
 end

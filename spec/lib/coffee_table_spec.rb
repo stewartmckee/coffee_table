@@ -61,7 +61,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         result.should eql "this string should be long"
-        @redis.get("test_key|6c787610efefdd2f97360de8e2df159c|compressed=true").should eql Marshal.dump(zipped_content)
+        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|compressed=true").should eql Marshal.dump(zipped_content)
       end
       it "does not compress on non strings" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
@@ -69,7 +69,7 @@ describe CoffeeTable::Cache do
           {:test => "this value is a decent length to trigger compress"}
         end
         result.should eql ({:test => "this value is a decent length to trigger compress"})
-        Base64.encode64(@redis.get("test_key|57c0174b67dea0b4f1353fdcc010a5a8|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
+        Base64.encode64(@redis.get("test_key|6edc6a13bfb5a9f926072f34d1006557|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
       end
 
       it "does not compress when turned off" do
@@ -78,7 +78,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         result.should eql "this string should be long"
-        @redis.get("test_key|6c787610efefdd2f97360de8e2df159c|").should eql Marshal.dump("this string should be long")
+        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|").should eql Marshal.dump("this string should be long")
       end
       it "does not compress on strings below limit" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
@@ -86,7 +86,7 @@ describe CoffeeTable::Cache do
           "short"
         end
         result.should eql "short"
-        @redis.get("test_key|1a294670dd0323473277b49225dad5da|").should eql Marshal.dump("short")
+        @redis.get("test_key|f0b9a08ff52e14e59daa03aae70a5cab|").should eql Marshal.dump("short")
       end
       it "decompresses compressed value" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)

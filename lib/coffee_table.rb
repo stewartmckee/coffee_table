@@ -61,10 +61,7 @@ module CoffeeTable
       if @options[:ignore_code_changes]
         block_key = ""
       else
-        block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "")
-        puts "------------------------------------------------------------"
-        puts block_source
-        puts "------------------------------------------------------------"
+        block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "").gsub(/^== disasm.*?$/, "")
         block_key = Digest::MD5.hexdigest(block_source)
       end
 
@@ -100,8 +97,6 @@ module CoffeeTable
           else
             @redis.set key.to_s, Marshal.dump(result)
           end
-
-          puts key.to_s
 
           unless expiry.nil?
             @redis.expire key.to_s, expiry
