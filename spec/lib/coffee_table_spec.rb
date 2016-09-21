@@ -61,7 +61,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         result.should eql "this string should be long"
-        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|compressed=true").should eql Marshal.dump(zipped_content)
+        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|compressed=true").should eq Marshal.dump(zipped_content)
       end
       it "does not compress on non strings" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
