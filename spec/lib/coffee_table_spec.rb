@@ -1,18 +1,18 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-
+require "base64"
 describe CoffeeTable::Cache do
-  
+
   before(:each) do
     @coffee_table = CoffeeTable::Cache.new
   end
-  
+
   specify { CoffeeTable::Cache.should respond_to :new}
   specify { @coffee_table.should respond_to :fetch}
   specify { @coffee_table.should respond_to :expire_key}
   specify { @coffee_table.should respond_to :expire_all}
   specify { @coffee_table.should respond_to :keys}
   specify { @coffee_table.should respond_to :expire_for}
-  
+
   describe "config" do
     it "should take a hash for config" do
       CoffeeTable::Cache.new({:test => "asdf"})
@@ -21,7 +21,7 @@ describe CoffeeTable::Cache do
       lambda{CoffeeTable::Cache.new}.should_not raise_exception
     end
   end
-  
+
   describe "fetch" do
     it "should raise an exception when block not given" do
       lambda{@coffee_table.fetch("asdf")}.should raise_exception CoffeeTable::BlockMissingError
@@ -30,8 +30,8 @@ describe CoffeeTable::Cache do
       result = @coffee_table.fetch("asdf") do
         "this is a value"
       end
-      
-      result.should == "this is a value"      
+
+      result.should == "this is a value"
     end
     it "should return cached value when cache available" do
       value = "this is a value"
@@ -42,9 +42,9 @@ describe CoffeeTable::Cache do
       result = @coffee_table.fetch("asdf") do
         value
       end
-        
-      result.should == "this is a value"      
-      
+
+      result.should == "this is a value"
+
     end
 
     context "compressing" do
@@ -61,7 +61,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         result.should eql "this string should be long"
-        @redis.get("test_key|1bdc7485920d15e21276c0c54cdb5bcf|compressed=true").should eql Marshal.dump(zipped_content)
+        @redis.get("test_key|6c787610efefdd2f97360de8e2df159c|compressed=true").should eql Marshal.dump(zipped_content)
       end
       it "does not compress on non strings" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
@@ -69,7 +69,7 @@ describe CoffeeTable::Cache do
           {:test => "this value is a decent length to trigger compress"}
         end
         result.should eql ({:test => "this value is a decent length to trigger compress"})
-        @redis.get("test_key|9e6b3fa8a7fd45acb4734946faf5b61c|").should eql "\x04\b{\x06:\ttestI\"6this value is a decent length to trigger compress\x06:\x06EF"
+        Base64.encode64(@redis.get("test_key|57c0174b67dea0b4f1353fdcc010a5a8|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
       end
 
       it "does not compress when turned off" do
@@ -78,7 +78,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         result.should eql "this string should be long"
-        @redis.get("test_key|1bdc7485920d15e21276c0c54cdb5bcf|").should eql "\x04\bI\"\x1Fthis string should be long\x06:\x06EF"
+        @redis.get("test_key|6c787610efefdd2f97360de8e2df159c|").should eql Marshal.dump("this string should be long")
       end
       it "does not compress on strings below limit" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
@@ -86,7 +86,7 @@ describe CoffeeTable::Cache do
           "short"
         end
         result.should eql "short"
-        @redis.get("test_key|73a95ee5162c38b2ebda1f70a3ab5893|").should eql "\x04\bI\"\nshort\x06:\x06EF"
+        @redis.get("test_key|1a294670dd0323473277b49225dad5da|").should eql Marshal.dump("short")
       end
       it "decompresses compressed value" do
         @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
@@ -134,7 +134,7 @@ describe CoffeeTable::Cache do
         end
         @coffee_table.keys.should == ["test_key|#{md5}|sample_classes|"]
       end
-      
+
       it "should use class name for keys" do
         md5 = md5_block do
           "this is a changed value"
@@ -167,9 +167,9 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, test_object) do
           "this is a changed value"
         end
-        
+
         @coffee_table.keys.should include "test_key|#{md5}|sample_class[9938]|"
-        
+
       end
       it "should raise an exception if a related object does not respond_to id" do
         test_object = SampleClassWithoutId.new
@@ -179,7 +179,7 @@ describe CoffeeTable::Cache do
             "this is a changed value"
           end
         }.should raise_exception CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class"
-        
+
       end
 
       it "should create a universal key if the objects passed in are an uninitialised class" do
@@ -190,8 +190,8 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass) do
           "this is a changed value"
         end
-        
-        @coffee_table.keys.should include "test_key|#{md5}|sample_classes|"          
+
+        @coffee_table.keys.should include "test_key|#{md5}|sample_classes|"
       end
 
     end
@@ -212,8 +212,8 @@ describe CoffeeTable::Cache do
         value = 'this is a changed value'
         result = @coffee_table.fetch("asdf") do
           value
-        end      
-        result.should == "this is a value"      
+        end
+        result.should == "this is a value"
 
       end
       it "should execute block and return value when cache has expired" do
@@ -223,8 +223,8 @@ describe CoffeeTable::Cache do
         sleep 2
         result = @coffee_table.fetch("asdf") do
           "this is a changed value"
-        end      
-        result.should == "this is a changed value"      
+        end
+        result.should == "this is a changed value"
       end
     end
 
@@ -251,7 +251,7 @@ describe CoffeeTable::Cache do
       end
     end
   end
-  
+
   describe "expire_key" do
 
     before(:each) do
@@ -377,7 +377,7 @@ describe CoffeeTable::Cache do
       end
     end
   end
-  
+
   describe "expire_all" do
     before(:each) do
 
@@ -409,7 +409,7 @@ describe CoffeeTable::Cache do
 
     end
   end
-  
+
   describe "keys" do
     before(:each) do
       @object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
@@ -464,7 +464,7 @@ describe CoffeeTable::Cache do
     end
 
   end
-  
+
   describe "expire_for" do
     before(:each) do
       object1 = [SampleClass.new(1), SampleClass.new(2), SampleClass.new(3)]
@@ -526,5 +526,5 @@ describe CoffeeTable::Cache do
       @coffee_table.keys.count.should == 1
     end
   end
-    
+
 end

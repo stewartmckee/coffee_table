@@ -9,9 +9,11 @@ require 'rufus/scheduler'
 require 'active_support/inflector'
 require 'digest/md5'
 require 'gzip'
+require "proc_extensions"
 
 module CoffeeTable
   class Cache
+
 
     include CoffeeTable::Utility
 
@@ -27,20 +29,24 @@ module CoffeeTable
       default_ignore_code_changes_to false
       default_compress_content_to true
       default_compress_min_size_to 10240
-      default_max_threads_to 28
+      default_max_threads_to 5
 
+      if @options.has_key?(:redis_url)
+        @redis = Redis.new({:url => @options[:redis_url]})
+      else
+        @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
+      end
       rufus_version = Gem::Version.new(Rufus::Scheduler::VERSION)
       if rufus_version >= Gem::Version.new('3.0.0')
-        @scheduler = Rufus::Scheduler.new(:max_work_threads => @options[:max_threads])
+        @scheduler = Rufus::Scheduler.new(:max_work_threads )
       else
         @scheduler = Rufus::Scheduler.start_new
       end
     end
 
+
     def fetch(initial_key, *related_objects, &block)
       raise CoffeeTable::BlockMissingError, "No block given to generate cache from" unless block_given?
-
-      @redis = get_redis
 
       # extract the options hash if it is present
       options = {}
@@ -52,11 +58,12 @@ module CoffeeTable
       # check objects are valid
       related_objects.flatten.map{|o| raise CoffeeTable::InvalidObjectError, "Objects passed in must have an id method or be a class" unless object_valid?(o)}
 
-      # if @options[:ignore_code_changes]
+      if @options[:ignore_code_changes]
         block_key = ""
-      # else
-      #   block_key = Digest::MD5.hexdigest(block.to_source)
-      # end
+      else
+        block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "")
+        block_key = Digest::MD5.hexdigest(block_source)
+      end
 
       flags = {}
 
@@ -101,18 +108,14 @@ module CoffeeTable
       else
         result = yield
       end
-
-      @redis.close
       result
     end
 
     def expire_key(key_value)
-      @redis = get_redis
       keys.map{|k| CoffeeTable::Key.parse(k)}.select{|key| key.has_element?(key_value) || key.to_s == key_value }.each do |key|
         @redis.del(key.to_s)
         @redis.srem "cache_keys", key.to_s
       end
-      @redis.close
     end
 
     def expire_all
@@ -120,10 +123,7 @@ module CoffeeTable
     end
 
     def keys
-      @redis = get_redis
-      members = @redis.smembers("cache_keys")
-      @redis.close
-      memberss
+      @redis.smembers("cache_keys")
     end
 
     def expire_for(*objects)
@@ -182,13 +182,6 @@ module CoffeeTable
     end
     def object_valid?(o)
       o.respond_to?(:id) || o.class == Class
-    end
-    def get_redis
-      if @options.has_key?(:redis_url)
-        return Redis.new({:url => @options[:redis_url]})
-      else
-        return Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
-      end
     end
   end
 end

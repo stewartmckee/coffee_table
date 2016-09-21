@@ -6,8 +6,8 @@ gemspec
 gem "awesome_print"
 gem "rufus-scheduler"
 gem "activesupport"
-gem "sourcify", :git => "git@github.com:stewartmckee/sourcify.git"
 gem "gzip"
+gem "proc_extensions"
 
 group :test do
   gem "rspec"
