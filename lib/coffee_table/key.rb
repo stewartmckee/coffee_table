@@ -41,6 +41,9 @@ module CoffeeTable
     def add_flag(options)
       @options.merge!(options)
     end
+    def remove_flag(key)
+      @options.delete key
+    end
 
     def elements
       @elements

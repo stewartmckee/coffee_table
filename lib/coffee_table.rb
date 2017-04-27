@@ -71,37 +71,39 @@ module CoffeeTable
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
       key = CoffeeTable::Key.new(initial_key, block_key, flags, related_objects)
-
       if @options[:enable_cache]
         if options.has_key?(:expiry)
           expiry = options[:expiry]
         else
           expiry = nil
         end
-
-        @redis.sadd "cache_keys", key unless @redis.sismember "cache_keys", key.to_s
         if @redis.exists(key.to_s)
-          if key.options[:compressed]
-            result = marshal_value(@redis.get(key.to_s).gunzip)
-          else
-            result = marshal_value(@redis.get(key.to_s))
-          end
+          result = marshal_value(@redis.get(key.to_s))
         else
-          result = yield
-
-          compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
-
-          if compress_result
-            key.add_flag(:compressed => true)
-            @redis.set key.to_s, Marshal.dump(result.gzip)
+          key.add_flag(:compressed => true)
+          if @redis.exists(key.to_s)
+            result = marshal_value(@redis.get(key.to_s)).gunzip
           else
-            @redis.set key.to_s, Marshal.dump(result)
-          end
+            key.remove_flag(:compressed)
+            result = yield
 
-          unless expiry.nil?
-            @redis.expire key.to_s, expiry
-            @scheduler.in "#{expiry}s" do
-              @redis.srem "cache_keys", key.to_s
+            compress_result = @options[:compress_content] && result.kind_of?(String) && result.length > @options[:compress_min_size]
+
+            if compress_result
+              key.add_flag(:compressed => true)
+              @redis.sadd "cache_keys", key.to_s
+              @redis.set(key.to_s, Marshal.dump(result.gzip))
+            else
+              @redis.sadd "cache_keys", key.to_s
+              @redis.set(key.to_s, Marshal.dump(result))
+            end
+
+            unless expiry.nil?
+              @redis.expire key.to_s, expiry
+              @scheduler.in "#{expiry}s" do
+                @redis.del(key.to_s)
+                @redis.srem "cache_keys", key.to_s
+              end
             end
           end
         end
