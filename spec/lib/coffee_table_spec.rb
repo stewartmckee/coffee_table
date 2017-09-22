@@ -50,12 +50,12 @@ describe CoffeeTable::Cache do
     context "compressing" do
 
       before(:each) do
-        @redis = Redis.new({:server => "127.0.0.1", :port => 6379})
+        @redis = Redis::Namespace.new("coffee_table", {:server => "127.0.0.1", :port => 6379})
 
       end
 
       it "compresses on strings greater than limit" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
         zipped_content = "this string should be long".gzip
         result = @coffee_table.fetch(:test_key) do
           "this string should be long"
@@ -64,7 +64,7 @@ describe CoffeeTable::Cache do
         @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|compressed=true").should eq Marshal.dump(zipped_content)
       end
       it "does not compress on non strings" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
         result = @coffee_table.fetch(:test_key) do
           {:test => "this value is a decent length to trigger compress"}
         end
@@ -73,7 +73,7 @@ describe CoffeeTable::Cache do
       end
 
       it "does not compress when turned off" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_content => false)
+        @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_content => false)
         result = @coffee_table.fetch(:test_key) do
           "this string should be long"
         end
@@ -81,7 +81,7 @@ describe CoffeeTable::Cache do
         @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|").should eql Marshal.dump("this string should be long")
       end
       it "does not compress on strings below limit" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
         result = @coffee_table.fetch(:test_key) do
           "short"
         end
@@ -89,7 +89,7 @@ describe CoffeeTable::Cache do
         @redis.get("test_key|f0b9a08ff52e14e59daa03aae70a5cab|").should eql Marshal.dump("short")
       end
       it "decompresses compressed value" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table = CoffeeTable::Cache.new(:redis => @redis, :compress_min_size => 20)
         @coffee_table.fetch(:test_key) do
           "this string should be long"
         end
@@ -101,7 +101,7 @@ describe CoffeeTable::Cache do
 
       end
       it "does not decompress a non compressed value" do
-        @coffee_table = CoffeeTable::Cache.new(:compress_min_size => 20)
+        @coffee_table = CoffeeTable::Cache.new(:redis => @redis, :compress_min_size => 20)
         @coffee_table.fetch(:test_key) do
           "short"
         end
@@ -197,11 +197,11 @@ describe CoffeeTable::Cache do
     end
     context "with expiry" do
       it "keys should update when cache expires" do
-        @coffee_table.fetch(:test_key, :expiry => 0.2) do
+        @coffee_table.fetch(:test_key, :expiry => 1) do
           "object1"
         end
         @coffee_table.keys.count.should == 1
-        sleep 0.5
+        sleep 1
         @coffee_table.keys.count.should == 0
       end
       it "should not execute block during cache period" do

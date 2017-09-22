@@ -1,7 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe CoffeeTable::Key do
-  
+
   context "has correct methods" do
     it "should have a parse class method" do
       CoffeeTable::Key.should respond_to :parse
@@ -43,7 +43,7 @@ describe CoffeeTable::Key do
       key.elements[0].should == "sample_|s&class"
 
       key.to_s.should == "te&#124;s&amp;t|asdf&#124;s&amp;|sample_&#124;s&amp;class|"
-    
+
     end
   end
 
@@ -109,7 +109,7 @@ describe CoffeeTable::Key do
     it "does not match on flag values" do
       key = CoffeeTable::Key.new("name", "key", {:option => "value", :option2 => "value2"}, @obj1, @obj2, @obj3)
       key.has_element?("option=value&amp;option2=value2").should be_false
-      
+
     end
 
   end

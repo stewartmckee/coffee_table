@@ -1,7 +1,6 @@
 module CoffeeTable
   module Utility
 
-    
     # used for setting default options
     def method_missing(method_sym, *arguments, &block)
       if method_sym.to_s =~ /^default_(.*)_to$/
