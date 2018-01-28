@@ -1,4 +1,4 @@
-0.2.9
+0.2.10
   - fixed bug in setting up redis
 
 0.2.8
