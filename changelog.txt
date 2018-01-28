@@ -1,5 +1,8 @@
-0.2.8
+0.2.9
   - fixed bug in setting up redis
+
+0.2.8
+  - removed rufus-scheduler
 
 0.2.6
   - fixed bug in creating coffee table object

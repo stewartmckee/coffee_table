@@ -1,5 +1,5 @@
 
-h1. CoffeeTable v0.2.6
+h1. CoffeeTable v0.2.8
 
 !https://badge.fury.io/rb/coffee_table.png!:http://badge.fury.io/rb/coffee_table
 !https://gemnasium.com/stewartmckee/coffee_table.png!
@@ -39,7 +39,6 @@ Creates a new cache object.  You can pass options into this method to modify the
   * :ignore_code_changes defaults to false.  By default a md5 hash of the code in the block is included in the key, if you change the code, the key automatically invalidates.  This is to protect against code changes that won't be picked up due to the cache returning.
   * :compress_content defaults to true and sets whether large strings are compressed
   * :compress_min_size defaults to 10240, which is 10k any strings larger than this are compressed before being stored
-  * :max_threads defaults to 28, if running in limited thread environment you can reduce this (eg Heroku)
 
 h4. fetch(initial_key, *related_objects, &block)
 

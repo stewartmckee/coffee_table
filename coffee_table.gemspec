@@ -20,8 +20,11 @@ Gem::Specification.new do |s|
 
   # specify any dependencies here; for example:
   s.add_development_dependency "rspec"
+  s.add_development_dependency "mock_redis"
+  s.add_development_dependency "spork"
+  s.add_development_dependency "coveralls"
   s.add_dependency "redis"
-  s.add_dependency "rufus-scheduler"
+  s.add_dependency "redis-namespace"
   s.add_dependency "activesupport"
   s.add_dependency "sourcify"
   s.add_dependency "gzip"
