@@ -9,7 +9,6 @@ require 'redis-namespace'
 require 'active_support/inflector'
 require 'digest/md5'
 require 'gzip'
-require 'awesome_print'
 
 module CoffeeTable
   class Cache
