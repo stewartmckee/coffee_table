@@ -32,9 +32,9 @@ module CoffeeTable
       if !@options[:redis].nil?
         @redis = @options[:redis]
       elsif @options.has_key?(:redis_url)
-        @redis = Redis.new({:url => @options[:redis_url]})
+        @redis = Redis.new(:url => @options[:redis_url])
       else
-        @redis = Redis.new({:server => @options[:redis_server], :port => @options[:redis_port]})
+        @redis = Redis.new(:host => @options[:redis_server], :port => @options[:redis_port])
       end
       rufus_version = Gem::Version.new(Rufus::Scheduler::VERSION)
       if rufus_version >= Gem::Version.new('3.0.0')

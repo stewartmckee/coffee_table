@@ -1,3 +1,6 @@
+0.2.8
+  - fixed bug in setting up redis
+
 0.2.6
   - fixed bug in creating coffee table object
 
