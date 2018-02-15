@@ -6,7 +6,7 @@ Coveralls.wear!
 
 require 'digest/md5'
 require 'spork'
-require 'mock_redis'
+# require 'mock_redis'
 require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class')
 require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id')
 
@@ -23,8 +23,8 @@ Spork.each_run do
     config.before(:each) {
 
 
-      redis = double(:redis)
-      Redis.stub(:new).and_return(MockRedis.new)
+      # redis = double(:redis)
+      # Redis.stub(:new).and_return(MockRedis.new)
       CoffeeTable::Cache.new.expire_all
 
     }

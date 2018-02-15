@@ -9,6 +9,8 @@ require 'redis-namespace'
 require 'active_support/inflector'
 require 'digest/md5'
 require 'gzip'
+require 'awesome_print'
+require 'active_support/hash_with_indifferent_access'
 
 module CoffeeTable
   class Cache
@@ -17,7 +19,7 @@ module CoffeeTable
 
     # initialize for coffee_table.  takes options to setup behaviour of cache
     def initialize(options={})
-      @options = options
+      @options = options.symbolize_keys
 
       default_enable_cache_to true
       default_redis_namespace_to :coffee_table
@@ -28,13 +30,19 @@ module CoffeeTable
       default_compress_content_to true
       default_compress_min_size_to 10240
 
+      redis_client = nil
       if !@options[:redis].nil?
-          @redis = Redis::Namespace.new(@options[:redis_namespace], :redis => @options[:redis])
+        redis_client = @options[:redis]
       elsif @options.has_key?(:redis_url)
-        @redis = Redis::Namespace.new(@options[:redis_namespace], {:url => @options[:redis_url]})
+        redis_client = Redis.new(:url => @options[:redis_url])
       else
-        @redis = Redis::Namespace.new(@options[:redis_namespace], {:host => @options[:redis_server], :port => @options[:redis_port]})
+        redis_client = Redis.new(:host => @options[:redis_server], :port => @options[:redis_port])
       end
+
+      @redis = Redis::Namespace.new(@options[:redis_namespace], :redis => redis_client)
+
+      self
+
     end
 
 

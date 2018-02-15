@@ -50,8 +50,7 @@ describe CoffeeTable::Cache do
     context "compressing" do
 
       before(:each) do
-        @redis = Redis::Namespace.new("coffee_table", {:server => "127.0.0.1", :port => 6379})
-
+        @redis = Redis::Namespace.new("coffee_table", :redis => Redis.new)
       end
 
       it "compresses on strings greater than limit" do
