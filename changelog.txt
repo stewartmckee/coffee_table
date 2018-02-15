@@ -1,3 +1,6 @@
+0.2.13
+  - removed awesome_print require
+
 0.2.12
   - fixing some specs
 
