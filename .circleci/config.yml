@@ -21,6 +21,7 @@ jobs:
       - checkout
       - ruby/install-deps
       - ruby/rspec-test
+      - store_test_results
 
 workflows:
   version: 2
