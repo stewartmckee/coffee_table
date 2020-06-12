@@ -7,8 +7,8 @@ Coveralls.wear!
 require 'digest/md5'
 require 'spork'
 # require 'mock_redis'
-require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class')
-require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id')
+require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class.rb')
+require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id.rb')
 
 
 Spork.prefork do
