@@ -77,11 +77,11 @@ module CoffeeTable
         else
           expiry = nil
         end
-        if keys.include?(key.to_s)
+        if keys.include?(key.to_s) && !options[:force]
           result = marshal_value(@redis.get(key.to_s))
         else
           key.add_flag(:compressed => true)
-          if keys.include?(key.to_s)
+          if keys.include?(key.to_s) && !options[:force]
             result = marshal_value(@redis.get(key.to_s)).gunzip
           else
             key.remove_flag(:compressed)

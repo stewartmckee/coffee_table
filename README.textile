@@ -49,6 +49,8 @@ end
 
 Each time this is ran when a cache item doesn't exist, a unique cache key is generated based on the data passed in, and the code block being executed.  It is good practice to put in objects that are used within the block, as in order to expire the key you need to specify the objects you want to expire for.  If this key contained one of those objects, it would be removed and the next time this was ran, fresh data would be placed in the cache.
 
+You can force to store a new cache entry by passing :force => true
+
 If you wish to specify a whole model type, for example, all users from above, you would pass in the class, for example:
 
 bc. user_details = @coffee_table.fetch(:user_detail, User) do

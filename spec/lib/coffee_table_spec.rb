@@ -225,6 +225,25 @@ describe CoffeeTable::Cache do
         expect(result).to eq "this is a changed value"
       end
     end
+    context "with force" do
+      it "keys should update when cache expires" do
+        @coffee_table.fetch(:test_key, :force => true) do
+          "object1"
+        end
+        expect(@coffee_table.keys.count).to eq 1
+      end
+      it "should not execute block during cache period" do
+        value = 'this is a value'
+        @coffee_table.fetch("asdf") do
+          value
+        end
+        value = 'this is a changed value'
+        result = @coffee_table.fetch("asdf", :force => true) do
+          value
+        end
+        expect(result).to eq "this is a changed value"
+      end
+    end
 
     context "changing block" do
       it "should not change key with same code" do
