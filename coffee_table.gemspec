@@ -23,6 +23,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "mock_redis"
   s.add_development_dependency "spork"
   s.add_development_dependency "coveralls"
+  s.add_development_dependency "rspec_junit_formatter"
+
   s.add_dependency "redis"
   s.add_dependency "redis-namespace"
   s.add_dependency "activesupport"
