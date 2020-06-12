@@ -7,15 +7,15 @@ Coveralls.wear!
 require 'digest/md5'
 require 'spork'
 # require 'mock_redis'
-require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class.rb')
-require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/spec/lib/sample_class_without_id.rb')
+require File.expand_path(File.dirname(__FILE__) + '/../spec/lib/sample_class.rb')
+require File.expand_path(File.dirname(__FILE__) + '/../spec/lib/sample_class_without_id.rb')
 
 
 Spork.prefork do
-  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table.rb')
-  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/block_missing_error.rb')
-  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/invalid_object_error.rb')
-  require File.expand_path(File.dirname(__FILE__) + '/../../coffee_table/lib/coffee_table/key.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../lib/coffee_table.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../lib/coffee_table/block_missing_error.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../lib/coffee_table/invalid_object_error.rb')
+  require File.expand_path(File.dirname(__FILE__) + '/../lib/coffee_table/key.rb')
 end
 
 Spork.each_run do
