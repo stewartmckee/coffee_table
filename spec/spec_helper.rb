@@ -22,14 +22,13 @@ Spork.each_run do
   RSpec.configure do |config|
     config.before(:each) {
 
-
-      # redis = double(:redis)
-      # Redis.stub(:new).and_return(MockRedis.new)
-      CoffeeTable::Cache.new.expire_all
+      redis = CoffeeTable::Cache.new.redis
+      redis.keys.map{|k| redis.del k }
 
     }
 
     config.after(:each) {
+      # CoffeeTable::Cache.new.expire_all
     }
   end
 end

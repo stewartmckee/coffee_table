@@ -6,15 +6,16 @@ module CoffeeTable
 
     def self.parse(string)
       elements = string.split("|", -1).map{|e| decode_element(e) }
-      key = Key.new(elements[0], elements[1], Hash[elements.last.split("&").map{|kv| [kv.split("=")[0].to_sym, kv.split("=")[1]]}])
+      key = Key.new(name: elements[0], block_key: elements[1], flags: Hash[elements.last.split("&").map{|kv| [kv.split("=")[0].to_sym, kv.split("=")[1]]}])
       key.elements =  elements[2..-2]
       key
     end
 
-    def initialize(name, block_key, options, *objects)
-      @name = name
-      @block_key = block_key
-      @options = options
+    def initialize(params = {}, *objects)
+      @block_key = params[:block_key] || ""
+      @flags = params[:flags] || {}
+      @options = params[:options] || {}
+      @name = "#{params[:name]}"
       @elements = objects.flatten.map{|o| key_for_object(o)}
     end
 
@@ -34,15 +35,15 @@ module CoffeeTable
       @block_key
     end
 
-    def options
-      @options
+    def flags
+      @flags
     end
 
-    def add_flag(options)
-      @options.merge!(options)
+    def add_flag(flags)
+      @flags.merge!(flags)
     end
     def remove_flag(key)
-      @options.delete key
+      @flags.delete key
     end
 
     def elements
@@ -50,7 +51,7 @@ module CoffeeTable
     end
 
     def elements=(elements)
-      @elements = elements
+      @elements = Array(elements)
     end
 
     def <=>(o)
@@ -58,16 +59,16 @@ module CoffeeTable
     end
 
     def to_s
-      [encode_element(@name), encode_element(@block_key), @elements.map{|e| encode_element(e) }, encode_element(@options.map{|k,v| "#{k}=#{v}"}.join("&"))].flatten.join("|")
+      [encode_element(@name), encode_element(@block_key), @elements.map{|e| encode_element(e) }, encode_element(@flags.map{|k,v| "#{k}=#{v}"}.join("&"))].flatten.join("|")
     end
 
     private
 
-    def matches?(fragment, options={})
-      if options[:match] == :start
+    def matches?(fragment, flags={})
+      if flags[:match] == :start
         @name == fragment || !@elements.select{|e| e =~ /^#{Regexp.escape(fragment)}/ }.empty?
       else
-        @name == fragment || @elements.include?(fragment)
+        @name == fragment || Array(@elements).include?(fragment)
       end
     end
 

@@ -5,7 +5,7 @@ require "coffee_table/invalid_object_error"
 require "coffee_table/block_missing_error"
 require "coffee_table/object_definition"
 require "redis"
-require 'redis-namespace'
+require "redis-namespace"
 require 'active_support/inflector'
 require 'digest/md5'
 require 'gzip'
@@ -15,6 +15,8 @@ module CoffeeTable
   class Cache
 
     include CoffeeTable::Utility
+
+    attr_reader :redis
 
     # initialize for coffee_table.  takes options to setup behaviour of cache
     def initialize(options={})
@@ -39,6 +41,7 @@ module CoffeeTable
       end
 
       @redis = Redis::Namespace.new(@options[:redis_namespace], :redis => redis_client)
+      @real_redis = redis_client
 
       self
 
@@ -64,22 +67,21 @@ module CoffeeTable
         block_source = RubyVM::InstructionSequence.disasm(block.to_proc).to_s.gsub(/\(\s*\d+\)/, "").gsub(/^== disasm.*?$/, "")
         block_key = Digest::MD5.hexdigest(block_source)
       end
-
       flags = {}
 
       # if first related_object is integer or fixnum it is used as an expiry time for the cache object
-      key = CoffeeTable::Key.new(initial_key, block_key, flags, related_objects)
+      key = CoffeeTable::Key.new({name: initial_key, block_key: block_key, options: @options, flags: flags}, related_objects)
       if @options[:enable_cache]
         if options.has_key?(:expiry)
           expiry = options[:expiry]
         else
           expiry = nil
         end
-        if @redis.exists(key.to_s)
+        if keys.include?(key.to_s)
           result = marshal_value(@redis.get(key.to_s))
         else
           key.add_flag(:compressed => true)
-          if @redis.exists(key.to_s)
+          if keys.include?(key.to_s)
             result = marshal_value(@redis.get(key.to_s)).gunzip
           else
             key.remove_flag(:compressed)
@@ -164,7 +166,11 @@ module CoffeeTable
 
     private
     def marshal_value(value)
+      return nil if value.nil?
       begin
+        # io = StringIO.new
+        # io.write(value)
+        # io.rewind
         result = Marshal.load(value)
       rescue ArgumentError => e
         puts "Attempting to load class/module #{e.message.split(" ")[-1]}"

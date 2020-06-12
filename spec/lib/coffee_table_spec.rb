@@ -6,12 +6,12 @@ describe CoffeeTable::Cache do
     @coffee_table = CoffeeTable::Cache.new
   end
 
-  specify { CoffeeTable::Cache.should respond_to :new}
-  specify { @coffee_table.should respond_to :fetch}
-  specify { @coffee_table.should respond_to :expire_key}
-  specify { @coffee_table.should respond_to :expire_all}
-  specify { @coffee_table.should respond_to :keys}
-  specify { @coffee_table.should respond_to :expire_for}
+  specify { expect(CoffeeTable::Cache).to respond_to :new}
+  specify { expect(@coffee_table).to respond_to :fetch}
+  specify { expect(@coffee_table).to respond_to :expire_key}
+  specify { expect(@coffee_table).to respond_to :expire_all}
+  specify { expect(@coffee_table).to respond_to :keys}
+  specify { expect(@coffee_table).to respond_to :expire_for}
 
   describe "config" do
     it "should take a hash for config" do
@@ -31,7 +31,7 @@ describe CoffeeTable::Cache do
         "this is a value"
       end
 
-      result.should == "this is a value"
+      expect(result).to eq "this is a value"
     end
     it "should return cached value when cache available" do
       value = "this is a value"
@@ -43,7 +43,7 @@ describe CoffeeTable::Cache do
         value
       end
 
-      result.should == "this is a value"
+      expect(result).to eq "this is a value"
 
     end
 
@@ -59,16 +59,16 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "this string should be long"
         end
-        result.should eql "this string should be long"
-        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|compressed=true").should eq Marshal.dump(zipped_content)
+        expect(result).to eql "this string should be long"
+        @redis.get("test_key|90a52c9dc8646bf66e93ce76578306c6|compressed=true").should start_with "\u0004"
       end
       it "does not compress on non strings" do
         @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
         result = @coffee_table.fetch(:test_key) do
           {:test => "this value is a decent length to trigger compress"}
         end
-        result.should eql ({:test => "this value is a decent length to trigger compress"})
-        Base64.encode64(@redis.get("test_key|6edc6a13bfb5a9f926072f34d1006557|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
+        expect(result).to eql ({:test => "this value is a decent length to trigger compress"})
+        Base64.encode64(@redis.get("test_key|0402899032596ee850d5271ab2312906|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
       end
 
       it "does not compress when turned off" do
@@ -76,16 +76,16 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "this string should be long"
         end
-        result.should eql "this string should be long"
-        @redis.get("test_key|1c083b7ed4b406f263ef329a608a80b9|").should eql Marshal.dump("this string should be long")
+        expect(result).to eql "this string should be long"
+        @redis.get("test_key|90a52c9dc8646bf66e93ce76578306c6|").should eql Marshal.dump("this string should be long")
       end
       it "does not compress on strings below limit" do
         @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
         result = @coffee_table.fetch(:test_key) do
           "short"
         end
-        result.should eql "short"
-        @redis.get("test_key|f0b9a08ff52e14e59daa03aae70a5cab|").should eql Marshal.dump("short")
+        expect(result).to eql "short"
+        @redis.get("test_key|55d2ae66967c26b2fef23e5ed6bd3930|").should eql Marshal.dump("short")
       end
       it "decompresses compressed value" do
         @coffee_table = CoffeeTable::Cache.new(:redis => @redis, :compress_min_size => 20)
@@ -95,8 +95,8 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "this string should be long"
         end
-        result.class.should eql String
-        result.should eql "this string should be long"
+        expect(result.class).to eql String
+        expect(result).to eql "this string should be long"
 
       end
       it "does not decompress a non compressed value" do
@@ -107,7 +107,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "short"
         end
-        result.should eql "short"
+        expect(result).to eql "short"
       end
 
 
@@ -121,7 +121,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|"]
+        expect(@coffee_table.keys).to eq ["test_key|#{md5}|"]
       end
 
       it "should create key from class" do
@@ -131,7 +131,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_classes|"]
+        expect(@coffee_table.keys).to eq ["test_key|#{md5}|sample_classes|"]
       end
 
       it "should use class name for keys" do
@@ -141,7 +141,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]|"]
+        expect(@coffee_table.keys).to eq ["test_key|#{md5}|sample_class[2]|"]
       end
 
       it "should use id from class in key" do
@@ -151,7 +151,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch(:test_key, SampleClass.new(2)) do
           "this is a changed value"
         end
-        @coffee_table.keys.should == ["test_key|#{md5}|sample_class[2]|"]
+        expect(@coffee_table.keys).to eq ["test_key|#{md5}|sample_class[2]|"]
       end
 
     end
@@ -167,7 +167,7 @@ describe CoffeeTable::Cache do
           "this is a changed value"
         end
 
-        @coffee_table.keys.should include "test_key|#{md5}|sample_class[9938]|"
+        expect(@coffee_table.keys).to include "test_key|#{md5}|sample_class[9938]|"
 
       end
       it "should raise an exception if a related object does not respond_to id" do
@@ -190,7 +190,7 @@ describe CoffeeTable::Cache do
           "this is a changed value"
         end
 
-        @coffee_table.keys.should include "test_key|#{md5}|sample_classes|"
+        expect(@coffee_table.keys).to include "test_key|#{md5}|sample_classes|"
       end
 
     end
@@ -199,9 +199,9 @@ describe CoffeeTable::Cache do
         @coffee_table.fetch(:test_key, :expiry => 1) do
           "object1"
         end
-        @coffee_table.keys.count.should == 1
+        expect(@coffee_table.keys.count).to eq 1
         sleep 1
-        @coffee_table.keys.count.should == 0
+        expect(@coffee_table.keys.count).to eq 0
       end
       it "should not execute block during cache period" do
         value = 'this is a value'
@@ -212,8 +212,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch("asdf") do
           value
         end
-        result.should == "this is a value"
-
+        expect(result).to eq "this is a value"
       end
       it "should execute block and return value when cache has expired" do
         @coffee_table.fetch("asdf", :expiry => 1) do
@@ -223,7 +222,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.fetch("asdf") do
           "this is a changed value"
         end
-        result.should == "this is a changed value"
+        expect(result).to eq "this is a changed value"
       end
     end
 
@@ -237,7 +236,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.get_cache(:test_key) do
           object
         end
-        result.should == "object1"
+        expect(result).to eq "object1"
       end
       it "should change key with changed code" do
         @coffee_table.get_cache(:test_key) do
@@ -246,7 +245,7 @@ describe CoffeeTable::Cache do
         result = @coffee_table.get_cache(:test_key) do
           "object2"
         end
-        result.should == "object2"
+        expect(result).to eq "object2"
       end
     end
   end
@@ -276,9 +275,9 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
       @coffee_table.expire_key("second_key")
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "third_key|#{@proc_md53}|"].sort
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|", "third_key|#{@proc_md53}|"].sort
 
     end
     it "should not expire anything if no matches" do
@@ -302,9 +301,9 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
       @coffee_table.expire_key("fourth_key")
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|", "second_key|#{@proc_md52}|", "third_key|#{@proc_md53}|"].sort
 
     end
 
@@ -322,7 +321,7 @@ describe CoffeeTable::Cache do
           "object2"
         end
 
-        result.should == "object2"
+        expect(result).to eq "object2"
       end
 
       it "should not invalidate block when block has not changed" do
@@ -336,7 +335,7 @@ describe CoffeeTable::Cache do
           object
         end
 
-        result.should == "object1"
+        expect(result).to eq "object1"
       end
 
       it "should not be affected by whitespace only changes" do
@@ -347,12 +346,10 @@ describe CoffeeTable::Cache do
 
         object = "object2"
         result = @coffee_table.fetch(:test_key) do
-
                   object
-
         end
 
-        result.should == "object1"
+        expect(result).to eq "object1"
       end
 
     end
@@ -372,7 +369,7 @@ describe CoffeeTable::Cache do
           "object2"
         end
 
-        result.should == "object1"
+        expect(result).to eq "object1"
       end
     end
   end
@@ -396,15 +393,15 @@ describe CoffeeTable::Cache do
     end
 
     it "should delete all keys" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_all
-      @coffee_table.keys.count.should == 0
+      expect(@coffee_table.keys.count).to eq 0
 
       result = @coffee_table.fetch(:first_key) do
         "changed value"
       end
 
-      result.should == "changed value"
+      expect(result).to eq "changed value"
 
     end
   end
@@ -428,8 +425,8 @@ describe CoffeeTable::Cache do
     end
 
     it "should return an array of string" do
-      @coffee_table.keys.should be_an_instance_of Array
-      @coffee_table.keys.map{|key| key.should be_an_instance_of String}
+      expect(@coffee_table.keys).to be_an_instance_of Array
+      @coffee_table.keys.map{|key| expect(key).to be_an_instance_of String}
     end
     it "should return key created without objects" do
       @coffee_table.fetch(:first_key) do
@@ -442,7 +439,7 @@ describe CoffeeTable::Cache do
         "object3"
       end
 
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|",
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|",
                                "second_key|#{@proc_md52}|",
                                "third_key|#{@proc_md53}|"].sort
 
@@ -457,7 +454,7 @@ describe CoffeeTable::Cache do
       @coffee_table.fetch(:third_key, @object3) do
         "object3"
       end
-      @coffee_table.keys.sort.should == ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]|",
+      expect(@coffee_table.keys.sort).to eq ["first_key|#{@proc_md51}|sample_class[1]|sample_class[2]|sample_class[3]|",
                                "second_key|#{@proc_md52}|sample_class[4]|sample_class[2]|sample_class[5]|",
                                "third_key|#{@proc_md53}|sample_class[7]|sample_class[2]|sample_class[8]|"].sort
     end
@@ -482,47 +479,47 @@ describe CoffeeTable::Cache do
     end
 
     it "should expire based on the initial key" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for(:second_key)
-      @coffee_table.keys.count.should == 2
+      expect(@coffee_table.keys.count).to eq 2
     end
 
     it "should expire based on a simple string" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for("sample_class[4]")
-      @coffee_table.keys.count.should == 2
+      expect(@coffee_table.keys.count).to eq 2
     end
 
     it "should not expire based on a part match" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for("impl")
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
     end
 
     it "should not delete any keys if object is not present" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for(SampleClass.new(18))
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
     end
     it "should only delete keys that object is present in" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for(SampleClass.new(1))
-      @coffee_table.keys.count.should == 2
+      expect(@coffee_table.keys.count).to eq 2
     end
 
     it "should delete a key if the object is at the end of they key" do
-      @coffee_table.keys.count.should == 3
+      expect(@coffee_table.keys.count).to eq 3
       @coffee_table.expire_for(SampleClass.new(3))
-      @coffee_table.keys.count.should == 2
+      expect(@coffee_table.keys.count).to eq 2
     end
 
     it "should expire all keys relating to a class if uninitialised class is passed in" do
       @coffee_table.fetch(:fourth_key) do
         "object4"
       end
-      @coffee_table.keys.count.should == 4
+      expect(@coffee_table.keys.count).to eq 4
       @coffee_table.expire_for(SampleClass)
-      @coffee_table.keys.count.should == 1
+      expect(@coffee_table.keys.count).to eq 1
     end
   end
 
