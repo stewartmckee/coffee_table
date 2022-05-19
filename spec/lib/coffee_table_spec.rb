@@ -60,7 +60,8 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         expect(result).to eql "this string should be long"
-        @redis.get("test_key|90a52c9dc8646bf66e93ce76578306c6|compressed=true").should start_with "\u0004"
+        puts "asdf"
+        @redis.get("test_key|009e2965832e67d06fb9a1b667cc1aca|compressed=true").should start_with "\u0004"
       end
       it "does not compress on non strings" do
         @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
@@ -68,7 +69,7 @@ describe CoffeeTable::Cache do
           {:test => "this value is a decent length to trigger compress"}
         end
         expect(result).to eql ({:test => "this value is a decent length to trigger compress"})
-        Base64.encode64(@redis.get("test_key|0402899032596ee850d5271ab2312906|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
+        Base64.encode64(@redis.get("test_key|8c3fde43e56b71d90843b9555673e120|")).should eql "BAh7BjoJdGVzdEkiNnRoaXMgdmFsdWUgaXMgYSBkZWNlbnQgbGVuZ3RoIHRv\nIHRyaWdnZXIgY29tcHJlc3MGOgZFVA==\n"
       end
 
       it "does not compress when turned off" do
@@ -77,7 +78,7 @@ describe CoffeeTable::Cache do
           "this string should be long"
         end
         expect(result).to eql "this string should be long"
-        @redis.get("test_key|90a52c9dc8646bf66e93ce76578306c6|").should eql Marshal.dump("this string should be long")
+        @redis.get("test_key|009e2965832e67d06fb9a1b667cc1aca|").should eql Marshal.dump("this string should be long")
       end
       it "does not compress on strings below limit" do
         @coffee_table = CoffeeTable::Cache.new(:server => "127.0.0.1", :port => 6379, :compress_min_size => 20)
@@ -85,7 +86,7 @@ describe CoffeeTable::Cache do
           "short"
         end
         expect(result).to eql "short"
-        @redis.get("test_key|55d2ae66967c26b2fef23e5ed6bd3930|").should eql Marshal.dump("short")
+        @redis.get("test_key|a2e7e06547b31ddc5dff0eba32b64753|").should eql Marshal.dump("short")
       end
       it "decompresses compressed value" do
         @coffee_table = CoffeeTable::Cache.new(:redis => @redis, :compress_min_size => 20)
